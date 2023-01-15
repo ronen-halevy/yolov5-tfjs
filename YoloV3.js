@@ -46,11 +46,8 @@ class YoloV3 {
 
   detectFrame = (imageFrame) => {
     tf.engine().startScope();
-    console.log('detectFramedetectFrame');
-    console.log(imageFrame);
 
     const imageTensor = this.imagePreprocess(imageFrame);
-    console.log(imageTensor);
 
     const modelOutputGrids = this.model.predict(imageTensor);
 
@@ -60,7 +57,6 @@ class YoloV3 {
       80,
       this.anchors
     );
-    console.log('decodedecodedecode');
     let axis = -1;
     let classIndices = classProbs.argMax(axis);
     classProbs = classProbs.max(axis);
@@ -120,9 +116,10 @@ const nms = (bboxes, scores, classIndices, iouTHR, scoreTHR, maxBoxes) => {
 };
 
 function decode(gridsOutputs, nClasses, anchors) {
-  console.log('decode');
+  // for both yolo and tiny:
   const nanchors_per_scale = 3; // Large, Medium, Small
   const anchor_entry_size = 2; // width, height
+
   let anchors_table = tf.reshape(anchors, [
     -1,
     nanchors_per_scale,
