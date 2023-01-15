@@ -31,7 +31,7 @@ console.log(nClasses);
 
 const { scoreTHR, iouTHR, maxBoxes } = configNms;
 
-const yoloV31 = new YoloV3(
+const yoloV3 = new YoloV3(
   model,
   anchors.anchor,
   nClasses,
@@ -50,7 +50,7 @@ const imageBlob = await res.blob();
 const imageObjectURL = URL.createObjectURL(imageBlob);
 imageObject.src = imageObjectURL;
 imageObject.addEventListener('load', async () => {
-  const f = yoloV31.detectFrame(imageObject).then((res) => {
+  const f = yoloV3.detectFrame(imageObject).then((res) => {
     console.log(res);
   });
 });
