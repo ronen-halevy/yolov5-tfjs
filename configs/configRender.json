@@ -1,7 +1,7 @@
 {
-  "font": "30px serif",
-  "lineWidth": 3,
-  "lineColor": "yellow",
-  "textColor": "blue",
-  "textBackgoundColor": "white"
+	"font": "10px serif",
+	"lineWidth": 3,
+	"lineColor": "yellow",
+	"textColor": "blue",
+	"textBackgoundColor": "white"
 }
