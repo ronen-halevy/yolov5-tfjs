@@ -16,32 +16,49 @@
    crossorigin="anonymous"
    />
 </head>
-<body style="font-size: 14px">
+               <body style="font-size: 14px">
+   <div class="container">
 
+
+   <div class="form-control border-success">Select Model
 
       <div id="divRadioSelectModel"></div>
+   </div>
+
+      <div class="form-control border-success">Select Weights
+
       <div id="divRadioSelectWeights"></div>
+   </div>
+<div class="form-control border-success">
       <button id="loadModel"></button>
+   </div>
+
+
       <div class="spinner-border text-primary" id="waitLoadingModel" role="status">
          <span class="visually-hidden">Loading...</span>
        </div>
+
        <div id="loadingDiv"></div>
 
-       
-
+       <div class="form-control border-success">
+       <div >
       <select id="selectExample"></select>
+   </div>
+   <div>
+
       <label id="selectedExampleTitle"></label>
+   </div>
+</div>
+   <div class="form-control border-success">
+<label>Scale Factor (click): </label>
       <button id="scale"></button>
+   </div>
 
 
+   <div class="form-control border-success">
 
       <button id="runYolo"></button>
-
-
-
-      
-
-
+   </div>
    <div id="buttons"></div>
    <div class="container">
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" 
@@ -56,6 +73,6 @@
 <canvas id="canvas"></canvas>
     <!-- tensorflow by cdn: -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.1.0/dist/tf.min.js"></script>
-
+   </div>
 </body>
 </html>

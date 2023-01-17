@@ -146,7 +146,7 @@ $(document).ready(function () {
   const cocoImages = cocoExamples.cocoImages;
   var selectedExample = cocoImages[0];
   var exampleUrl = selectedExample.url;
-  $('#selectedExampleTitle').html(selectedExample.title);
+  $('#selectedExampleTitle').html('Title: ' + selectedExample.title);
 
   cocoImages.map((option, index) => {
     console.log(option);
