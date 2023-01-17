@@ -23,12 +23,14 @@ import configModel from './configs/configModel.json' assert { type: 'json' };
 import configNms from './configs/configNms.json' assert { type: 'json' };
 import configRender from './configs/configRender.json' assert { type: 'json' };
 
+import cocoExamples from './examples/cocoExamples.json' assert { type: 'json' };
+
 $(document).ready(function () {
   var model = '';
   var anchors = '';
   var classNames = '';
-  // var r = $('<input type="button" value="select model"/>');
-  // $('#buttons').append(r);
+  console.log(classNames);
+
   const modelsTable1 = configModel.models;
   const models = Object.keys(modelsTable1);
   var selectedModel = Object.keys(modelsTable1)[0];
@@ -36,7 +38,11 @@ $(document).ready(function () {
   var selectedWeights = Object.keys(modelsTable1[selectedModel])[0];
 
   const onLoadModel = async () => {
+    $('#waitLoadingModel').show();
+
     console.log('gggggggggggggg', selectedModel, selectedWeights);
+    console.log('gggggggggggggg', modelsTable1);
+
     const { modelUrl, anchorsUrl, classNamesUrl } =
       modelsTable1[selectedModel][selectedWeights];
 
@@ -45,21 +51,38 @@ $(document).ready(function () {
       anchorsUrl,
       classNamesUrl
     );
+    console.log(anchors);
+    classNames = classNames.split(/\r?\n/);
+
+    $('#waitLoadingModel').hide();
+
     console.log(model, anchors, classNames);
   };
+  $('#waitLoadingModel').hide();
+
   // listExamples.map((option, index) => (
   // )
   // $('#submit').click(function () {
   $('#loadModel').html('Load Model');
   $('#loadModel').click(onLoadModel);
 
+  var scaleFactor = 1;
+  $('#scale').html('x' + scaleFactor);
+  $('#scale').click(() => {
+    scaleFactor = scaleFactor * 2 >= 1 ? 0.25 : scaleFactor * 2;
+    $('#scale').html('x' + scaleFactor);
+    console.log('hhhhh');
+  });
+
   const onChangeWןwights = (event) => {
     selectedWeights = event.target.value;
   };
   const onChangeRadio = (event) => {
-    console.log('ddddd', event.target.value, models, models[selectedModel]);
     selectedModel = event.target.value;
 
+    dislayWeightsButtons(selectedModel);
+  };
+  const dislayWeightsButtons = (selectedModel) => {
     selectedWeights = Object.keys(modelsTable1[selectedModel]);
     $('#divRadioSelectWeights').empty();
     selectedWeights.map((option, index) => {
@@ -110,6 +133,44 @@ $(document).ready(function () {
       .append($('<br>'));
   });
 
+  $("input[id|='YoloV3Tiny']").attr('checked', true);
+
+  // $('#YoloV3').attr('checked', true);
+  dislayWeightsButtons('YoloV3Tiny');
+  $("input[id|='coco']").attr('checked', true);
+
+  // var r = $('<input type="button" value="select model"/>');
+  // $('#selectExample').append(r);
+
+  console.log(cocoExamples.cocoImages);
+  const cocoImages = cocoExamples.cocoImages;
+  var selectedExample = cocoImages[0];
+  var exampleUrl = selectedExample.url;
+  $('#selectedExampleTitle').html(selectedExample.title);
+
+  cocoImages.map((option, index) => {
+    console.log(option);
+    $('#selectExample').append(new Option(option.url, index));
+  });
+  $('#selectExample').change((event) => {
+    console.log(event.target.value);
+    selectedExample = cocoImages[event.target.value];
+    exampleUrl = selectedExample.url;
+
+    console.log(selectedExample);
+    $('#selectedExampleTitle').html(selectedExample.title);
+    // selecteTitle = cocoImages[event.target.value].title;
+  });
+
+  // .change((event) => {
+  //   console.log(event);
+  // });
+
+  // $('#selectModel').on('change', function () {
+  //   alert(this.value);
+  //   alert(this.value);
+  // });
+
   // models.map((option, index) => {
   //   $('#selectModel').append(new Option(option, index));
   // });
@@ -120,7 +181,10 @@ $(document).ready(function () {
   // });
   $('#runYolo').html('Run Yolo');
   $('#runYolo').click(async () => {
-    console.log(model, anchors, classNames);
+    console.log(model);
+    console.log(anchors);
+    console.log(classNames);
+
     const modelsTable = configModel.models;
     // take first in list as a default:
     // const selectedModel = Object.keys(modelsTable)[0];
@@ -134,7 +198,6 @@ $(document).ready(function () {
     //   anchorsUrl,
     //   classNamesUrl
     // );
-    classNames = classNames.split(/\r?\n/);
     const nClasses = classNames.length;
 
     const { scoreTHR, iouTHR, maxBoxes } = configNms;
@@ -147,6 +210,7 @@ $(document).ready(function () {
       iouTHR,
       maxBoxes
     );
+    console.log(model);
 
     // const canvas = document.getElementById('canvas');
     const canvas = $('#canvas')[0];
@@ -166,18 +230,9 @@ $(document).ready(function () {
       textBackgoundColor
     );
 
-    const imgUrl1 =
-      'https://images.pexels.com/photos/13230453/pexels-photo-13230453.jpeg';
-
-    const imgUrl =
-      // 'https://images.pexels.com/photos/13230453/pexels-photo-13230453.jpeg';
-      // 'https://cdn.pixabay.com/photo/2017/09/04/19/02/scheepvaartmarkering-2715015_960_720.jpg';
-      // 'https://images.pexels.com/photos/1181376/pexels-photo-1181376.jpeg';
-      'https://images.pexels.com/photos/1181376/pexels-photo-1181376.jpeg';
-
     var imageObject = new window.Image();
-
-    const res = await fetch(imgUrl);
+    console.log(exampleUrl);
+    const res = await fetch(exampleUrl);
     const imageBlob = await res.blob();
     const imageObjectURL = URL.createObjectURL(imageBlob);
     imageObject.src = imageObjectURL;
@@ -193,8 +248,8 @@ $(document).ready(function () {
         scores,
         classIndices,
         classNames,
-        imageObject.width,
-        imageObject.height
+        imageObject.width * scaleFactor,
+        imageObject.height * scaleFactor
       );
     });
   });
