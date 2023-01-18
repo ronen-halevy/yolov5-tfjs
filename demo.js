@@ -20,7 +20,6 @@ $(document).ready(function () {
 			anchorsUrl,
 			classNamesUrl
 		);
-		console.log(anchors);
 		classNames = classNames.split(/\r?\n/);
 
 		$('#waitLoadingModel').hide();
@@ -33,7 +32,6 @@ $(document).ready(function () {
 	var model = '';
 	var anchors = '';
 	var classNames = '';
-	console.log(classNames);
 
 	const modelsTable = configModel.models;
 	const models = Object.keys(modelsTable);
@@ -68,7 +66,6 @@ $(document).ready(function () {
 		selectedWeights = Object.keys(modelsTable[selectedModel]);
 		$('#divRadioSelectWeights').empty();
 		selectedWeights.map((option, index) => {
-			console.log(option, index);
 			$('#divRadioSelectWeights')
 				.append(
 					$('<input>')
@@ -89,11 +86,9 @@ $(document).ready(function () {
 				)
 				.append($('<br>'));
 		});
-		console.log('ddddd', selectedWeights);
 	};
 
 	models.map((option, index) => {
-		console.log(option, index);
 		$('#divRadioSelectModel')
 			.append(
 				$('<input>')
@@ -121,32 +116,24 @@ $(document).ready(function () {
 	dislayWeightsButtons('YoloV3Tiny');
 	$("input[id|='coco']").attr('checked', true);
 
-	console.log(cocoExamples.cocoImages);
 	const cocoImages = cocoExamples.cocoImages;
 	var selectedExample = cocoImages[0];
 	var exampleUrl = selectedExample.url;
 	$('#selectedExampleTitle').html('Title: ' + selectedExample.title);
 
 	cocoImages.map((option, index) => {
-		console.log(option);
 		$('#selectExample').append(new Option(option.url, index));
 	});
 	$('#selectExample').change((event) => {
-		console.log(event.target.value);
 		selectedExample = cocoImages[event.target.value];
 		exampleUrl = selectedExample.url;
 
-		console.log(selectedExample);
 		$('#selectedExampleTitle').html(selectedExample.title);
 		// selecteTitle = cocoImages[event.target.value].title;
 	});
 
 	$('#runYolo').html('Run Yolo');
 	$('#runYolo').click(async () => {
-		console.log(model);
-		console.log(anchors);
-		console.log(classNames);
-
 		const nClasses = classNames.length;
 
 		const { scoreTHR, iouTHR, maxBoxes } = configNms;
@@ -159,7 +146,6 @@ $(document).ready(function () {
 			iouTHR,
 			maxBoxes
 		);
-		console.log(model);
 
 		// const canvas = document.getElementById('canvas');
 		const canvas = $('#canvas')[0];
@@ -180,7 +166,6 @@ $(document).ready(function () {
 		);
 
 		var imageObject = new window.Image();
-		console.log(exampleUrl);
 		const res = await fetch(exampleUrl);
 		const imageBlob = await res.blob();
 		const imageObjectURL = URL.createObjectURL(imageBlob);
@@ -189,7 +174,6 @@ $(document).ready(function () {
 			const [selBboxes, scores, classIndices] = await yoloV3.detectFrame(
 				imageObject
 			);
-			console.log(selBboxes);
 
 			draw.renderOnImage(
 				imageObject,
