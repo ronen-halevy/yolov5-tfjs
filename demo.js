@@ -9,11 +9,11 @@ import cocoExamples from './examples/cocoExamples.json' assert { type: 'json' };
 
 $(document).ready(function () {
 	// Model Load Functions
-	const loadModel = async (modelsTable1, selectedModel, selectedWeights) => {
+	const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
 		$('#waitLoadingModel').show();
 
 		const { modelUrl, anchorsUrl, classNamesUrl } =
-			modelsTable1[selectedModel][selectedWeights];
+			modelsTable[selectedModel][selectedWeights];
 
 		[model, anchors, classNames] = await createModel(
 			modelUrl,
@@ -35,13 +35,13 @@ $(document).ready(function () {
 	var classNames = '';
 	console.log(classNames);
 
-	const modelsTable1 = configModel.models;
-	const models = Object.keys(modelsTable1);
-	var selectedModel = Object.keys(modelsTable1)[0];
-	var selectedWeights = Object.keys(modelsTable1[selectedModel])[0];
+	const modelsTable = configModel.models;
+	const models = Object.keys(modelsTable);
+	var selectedModel = Object.keys(modelsTable)[0];
+	var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
 
 	const onLoadModel = async () => {
-		await loadModel(modelsTable1, selectedModel, selectedWeights);
+		await loadModel(modelsTable, selectedModel, selectedWeights);
 	};
 	$('#waitLoadingModel').hide();
 	onLoadModel();
@@ -59,13 +59,13 @@ $(document).ready(function () {
 	const onChangeWןwights = (event) => {
 		selectedWeights = event.target.value;
 	};
-	const onChangeRadio = (event) => {
+	const onChangeModelSelect = (event) => {
 		selectedModel = event.target.value;
 
 		dislayWeightsButtons(selectedModel);
 	};
 	const dislayWeightsButtons = (selectedModel) => {
-		selectedWeights = Object.keys(modelsTable1[selectedModel]);
+		selectedWeights = Object.keys(modelsTable[selectedModel]);
 		$('#divRadioSelectWeights').empty();
 		selectedWeights.map((option, index) => {
 			console.log(option, index);
@@ -103,7 +103,7 @@ $(document).ready(function () {
 						name: 'model',
 						value: option,
 					})
-					.change(onChangeRadio)
+					.change(onChangeModelSelect)
 			)
 			.append(
 				$('<label>')
@@ -147,7 +147,6 @@ $(document).ready(function () {
 		console.log(anchors);
 		console.log(classNames);
 
-		const modelsTable = configModel.models;
 		const nClasses = classNames.length;
 
 		const { scoreTHR, iouTHR, maxBoxes } = configNms;
