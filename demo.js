@@ -6,8 +6,38 @@ import configNms from './configs/configNms.json' assert { type: 'json' };
 import configRender from './configs/configRender.json' assert { type: 'json' };
 
 import cocoExamples from './examples/cocoExamples.json' assert { type: 'json' };
+var yoloV3 = '';
+
+const font = configRender.font;
+const lineWidth = configRender.lineWidth;
+const lineColor = configRender.lineColor;
+const textColor = configRender.textColor;
+const textBackgoundColor = configRender.textBackgoundColor;
+
+var model = '';
+var anchors = '';
+var classNames = '';
+var nClasses = '';
+
+const modelsTable = configModel.models;
+const models = Object.keys(modelsTable);
+var selectedModel = Object.keys(modelsTable)[0];
+var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
+
+// const canvas = $('#canvas')[0];
+console.log(canvas);
+const draw = new Render(
+	canvas,
+	lineWidth,
+	lineColor,
+	font,
+	textColor,
+	textBackgoundColor
+);
 
 $(document).ready(function () {
+	$('#waitYolo').hide();
+
 	// Model Load Functions
 	const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
 		$('#waitLoadingModel').show();
@@ -21,6 +51,18 @@ $(document).ready(function () {
 			classNamesUrl
 		);
 		classNames = classNames.split(/\r?\n/);
+		nClasses = classNames.length;
+
+		const { scoreTHR, iouTHR, maxBoxes } = configNms;
+
+		yoloV3 = new YoloV3(
+			model,
+			anchors.anchor,
+			nClasses,
+			scoreTHR,
+			iouTHR,
+			maxBoxes
+		);
 
 		$('#waitLoadingModel').hide();
 
@@ -28,15 +70,6 @@ $(document).ready(function () {
 			'Loaded: ' + selectedModel + '+' + selectedWeights
 		);
 	};
-
-	var model = '';
-	var anchors = '';
-	var classNames = '';
-
-	const modelsTable = configModel.models;
-	const models = Object.keys(modelsTable);
-	var selectedModel = Object.keys(modelsTable)[0];
-	var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
 
 	const onLoadModel = async () => {
 		await loadModel(modelsTable, selectedModel, selectedWeights);
@@ -82,7 +115,7 @@ $(document).ready(function () {
 						.prop({
 							for: option,
 						})
-						.html(option)
+						.text(option)
 				)
 				.append($('<br>'));
 		});
@@ -105,7 +138,7 @@ $(document).ready(function () {
 					.prop({
 						for: option,
 					})
-					.html(option)
+					.text(option)
 			)
 			.append($('<br>'));
 	});
@@ -119,7 +152,7 @@ $(document).ready(function () {
 	const cocoImages = cocoExamples.cocoImages;
 	var selectedExample = cocoImages[0];
 	var exampleUrl = selectedExample.url;
-	$('#selectedExampleTitle').html('Title: ' + selectedExample.title);
+	$('#selectedExampleTitle').text('Title: ' + selectedExample.title);
 
 	cocoImages.map((option, index) => {
 		$('#selectExample').append(new Option(option.url, index));
@@ -128,42 +161,13 @@ $(document).ready(function () {
 		selectedExample = cocoImages[event.target.value];
 		exampleUrl = selectedExample.url;
 
-		$('#selectedExampleTitle').html(selectedExample.title);
+		$('#selectedExampleTitle').text(selectedExample.title);
 		// selecteTitle = cocoImages[event.target.value].title;
 	});
 
-	$('#runYolo').html('Run Yolo');
+	$('#runYolo').text('Run Yolo');
 	$('#runYolo').click(async () => {
-		const nClasses = classNames.length;
-
-		const { scoreTHR, iouTHR, maxBoxes } = configNms;
-
-		const yoloV3 = new YoloV3(
-			model,
-			anchors.anchor,
-			nClasses,
-			scoreTHR,
-			iouTHR,
-			maxBoxes
-		);
-
-		// const canvas = document.getElementById('canvas');
-		const canvas = $('#canvas')[0];
-
-		const font = configRender.font;
-		const lineWidth = configRender.lineWidth;
-		const lineColor = configRender.lineColor;
-		const textColor = configRender.textColor;
-		const textBackgoundColor = configRender.textBackgoundColor;
-
-		const draw = new Render(
-			canvas,
-			lineWidth,
-			lineColor,
-			font,
-			textColor,
-			textBackgoundColor
-		);
+		$('#waitYolo').show();
 
 		var imageObject = new window.Image();
 		const res = await fetch(exampleUrl);
@@ -174,6 +178,8 @@ $(document).ready(function () {
 			const [selBboxes, scores, classIndices] = await yoloV3.detectFrame(
 				imageObject
 			);
+			console.log(selBboxes);
+			console.log('selBboxes');
 
 			draw.renderOnImage(
 				imageObject,
@@ -185,6 +191,7 @@ $(document).ready(function () {
 				imageObject.height * scaleFactor
 			);
 		});
+		$('#waitYolo').hide();
 	});
 
 	// demoYovoV3();
