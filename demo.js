@@ -24,7 +24,6 @@ var selectedModel = Object.keys(modelsTable)[0];
 var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
 
 // const canvas = $('#canvas')[0];
-console.log(canvas);
 const draw = new Render(
 	canvas,
 	lineWidth,
@@ -33,53 +32,49 @@ const draw = new Render(
 	textColor,
 	textBackgoundColor
 );
+const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
+	$('#waitLoadingModel').show();
+
+	const { modelUrl, anchorsUrl, classNamesUrl } =
+		modelsTable[selectedModel][selectedWeights];
+
+	const [model, anchors, classNamesString] = await createModel(
+		modelUrl,
+		anchorsUrl,
+		classNamesUrl
+	);
+	classNames = classNamesString.split(/\r?\n/);
+
+	$('#waitLoadingModel').hide();
+
+	$('#loadedModelTilte').text(
+		'Loaded: ' + selectedModel + '+' + selectedWeights
+	);
+	return [model, anchors, classNames];
+};
+const onLoadModel = async () => {
+	const [model, anchors, classNames] = await loadModel(
+		modelsTable,
+		selectedModel,
+		selectedWeights
+	);
+	const nClasses = classNames.length;
+	const { scoreTHR, iouTHR, maxBoxes } = configNms;
+
+	yoloV3 = new YoloV3(
+		model,
+		anchors.anchor,
+		nClasses,
+		scoreTHR,
+		iouTHR,
+		maxBoxes
+	);
+};
 
 $(document).ready(function () {
 	$('#waitYolo').hide();
-
-	// Model Load Functions
-	const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
-		$('#waitLoadingModel').show();
-
-		const { modelUrl, anchorsUrl, classNamesUrl } =
-			modelsTable[selectedModel][selectedWeights];
-
-		const [model, anchors, classNamesString] = await createModel(
-			modelUrl,
-			anchorsUrl,
-			classNamesUrl
-		);
-		classNames = classNamesString.split(/\r?\n/);
-
-		$('#waitLoadingModel').hide();
-
-		$('#loadedModelTilte').text(
-			'Loaded: ' + selectedModel + '+' + selectedWeights
-		);
-		return [model, anchors, classNames];
-	};
-
-	const onLoadModel = async () => {
-		const [model, anchors, classNames] = await loadModel(
-			modelsTable,
-			selectedModel,
-			selectedWeights
-		);
-		const nClasses = classNames.length;
-		const { scoreTHR, iouTHR, maxBoxes } = configNms;
-
-		yoloV3 = new YoloV3(
-			model,
-			anchors.anchor,
-			nClasses,
-			scoreTHR,
-			iouTHR,
-			maxBoxes
-		);
-	};
 	$('#waitLoadingModel').hide();
 	onLoadModel();
-
 	$('#loadModel').text('Load Model');
 	$('#loadModel').click(onLoadModel);
 
@@ -96,9 +91,9 @@ $(document).ready(function () {
 	const onChangeModelSelect = (event) => {
 		selectedModel = event.target.value;
 
-		dislayWeightsButtons(selectedModel);
+		createWeightsButtons(selectedModel);
 	};
-	const dislayWeightsButtons = (selectedModel) => {
+	const createWeightsButtons = (selectedModel) => {
 		selectedWeights = Object.keys(modelsTable[selectedModel]);
 		$('#divRadioSelectWeights').empty();
 		selectedWeights.map((option, index) => {
@@ -149,7 +144,7 @@ $(document).ready(function () {
 	$("input[id|='YoloV3Tiny']").attr('checked', true);
 
 	// $('#YoloV3').attr('checked', true);
-	dislayWeightsButtons('YoloV3Tiny');
+	createWeightsButtons('YoloV3Tiny');
 	$("input[id|='coco']").attr('checked', true);
 
 	const cocoImages = cocoExamples.cocoImages;
@@ -196,6 +191,4 @@ $(document).ready(function () {
 		});
 		$('#waitYolo').hide();
 	});
-
-	// demoYovoV3();
 });
