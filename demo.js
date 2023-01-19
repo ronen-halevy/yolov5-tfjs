@@ -32,7 +32,7 @@ const draw = new Render(
 	textColor,
 	textBackgoundColor
 );
-const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
+const loadModel = async (selectedModel, selectedWeights) => {
 	$('#waitLoadingModel').show();
 
 	const { modelUrl, anchorsUrl, classNamesUrl } =
@@ -52,10 +52,8 @@ const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
 	);
 	return [model, anchors, classNames];
 };
-const createDetector = async (modelsTable, selectedModel, selectedWeights) => {
-	console.log('createDetector');
+const createDetector = async (selectedModel, selectedWeights) => {
 	const [model, anchors, classNames] = await loadModel(
-		modelsTable,
 		selectedModel,
 		selectedWeights
 	);
@@ -161,12 +159,12 @@ $(document).ready(function () {
 	// arrange modell load elements:
 	$('#loadModel').text('Load Model');
 	$('#loadModel').click((event) =>
-		createDetector(modelsTable, selectedModel, selectedWeights)
+		createDetector(selectedModel, selectedWeights)
 	);
 
 	// Load model and detector with default selections on init:
 	createWeightsElements('YoloV3Tiny');
-	createDetector(modelsTable, selectedModel, selectedWeights);
+	createDetector(selectedModel, selectedWeights);
 	// mark selected buttons:
 	$("input[id|='YoloV3Tiny']").attr('checked', true);
 	$("input[id|='coco']").attr('checked', true);
