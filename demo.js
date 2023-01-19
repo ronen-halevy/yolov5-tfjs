@@ -20,7 +20,7 @@ var classNames = '';
 
 const modelsTable = configModel.models;
 const models = Object.keys(modelsTable);
-var selectedModel = Object.keys(modelsTable)[0];
+var selectedModel = Object.keys(modelsTable)[1];
 var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
 
 // const canvas = $('#canvas')[0];
@@ -94,9 +94,9 @@ const createModelSelectElements = (createWeightsElementsCallback) => {
 };
 
 const createWeightsElements = (selectedModel) => {
-	selectedWeights = Object.keys(modelsTable[selectedModel]);
+	const weights = Object.keys(modelsTable[selectedModel]);
 	$('#divRadioSelectWeights').empty();
-	selectedWeights.map((option, index) => {
+	weights.map((option, index) => {
 		$('#divRadioSelectWeights')
 			.append(
 				$('<input>')
@@ -158,25 +158,17 @@ $(document).ready(function () {
 	);
 
 	// Load model and detector with default selections on init:
-	createWeightsElements('YoloV3Tiny');
+	createWeightsElements(selectedModel);
 	createDetector(selectedModel, selectedWeights);
 	// mark selected buttons:
-	$("input[id|='YoloV3Tiny']").attr('checked', true);
-	$("input[id|='coco']").attr('checked', true);
+	$('#' + selectedModel).attr('checked', true);
+	$('#' + selectedWeights).attr('checked', true);
 
-	// arrange scale factor elements:
-	var scaleFactor = 0.125;
-	$('#scale').text('x' + scaleFactor);
-	$('#scale').click(() => {
-		scaleFactor = scaleFactor * 2 > 1 ? 0.125 : scaleFactor * 2;
-		$('#scale').text('x' + scaleFactor);
-	});
-
+	// Select InputExample elements
 	const cocoImages = cocoExamples.cocoImages;
 	var selectedExample = cocoImages[0];
 	var exampleUrl = selectedExample.url;
 	$('#selectedExampleTitle').text('Title: ' + selectedExample.title);
-
 	cocoImages.map((option, index) => {
 		$('#selectExample').append(new Option(option.url, index));
 	});
@@ -186,6 +178,14 @@ $(document).ready(function () {
 
 		$('#selectedExampleTitle').text(selectedExample.title);
 		// selecteTitle = cocoImages[event.target.value].title;
+	});
+
+	// arrange scale factor elements:
+	var scaleFactor = 0.125;
+	$('#scale').text('x' + scaleFactor);
+	$('#scale').click(() => {
+		scaleFactor = scaleFactor * 2 > 1 ? 0.125 : scaleFactor * 2;
+		$('#scale').text('x' + scaleFactor);
 	});
 
 	$('#runYolo').text('Run Yolo');
