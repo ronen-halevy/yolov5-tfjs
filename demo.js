@@ -52,7 +52,8 @@ const loadModel = async (modelsTable, selectedModel, selectedWeights) => {
 	);
 	return [model, anchors, classNames];
 };
-const onLoadModel = async () => {
+const createDetector = async (modelsTable, selectedModel, selectedWeights) => {
+	console.log('createDetector');
 	const [model, anchors, classNames] = await loadModel(
 		modelsTable,
 		selectedModel,
@@ -71,54 +72,8 @@ const onLoadModel = async () => {
 	);
 };
 
-$(document).ready(function () {
-	$('#waitYolo').hide();
-	$('#waitLoadingModel').hide();
-	onLoadModel();
-	$('#loadModel').text('Load Model');
-	$('#loadModel').click(onLoadModel);
-
-	var scaleFactor = 0.125;
-	$('#scale').text('x' + scaleFactor);
-	$('#scale').click(() => {
-		scaleFactor = scaleFactor * 2 > 1 ? 0.125 : scaleFactor * 2;
-		$('#scale').text('x' + scaleFactor);
-	});
-
-	const onChangeWןwights = (event) => {
-		selectedWeights = event.target.value;
-	};
-	const onChangeModelSelect = (event) => {
-		selectedModel = event.target.value;
-
-		createWeightsButtons(selectedModel);
-	};
-	const createWeightsButtons = (selectedModel) => {
-		selectedWeights = Object.keys(modelsTable[selectedModel]);
-		$('#divRadioSelectWeights').empty();
-		selectedWeights.map((option, index) => {
-			$('#divRadioSelectWeights')
-				.append(
-					$('<input>')
-						.prop({
-							type: 'radio',
-							id: option,
-							name: 'weights',
-							value: option,
-						})
-						.change(onChangeWןwights)
-				)
-				.append(
-					$('<label>')
-						.prop({
-							for: option,
-						})
-						.text(option)
-				)
-				.append($('<br>'));
-		});
-	};
-
+const createModelSelectElements = (createWeightsElementsCallback) => {
+	// model select butttons
 	models.map((option, index) => {
 		$('#divRadioSelectModel')
 			.append(
@@ -129,7 +84,10 @@ $(document).ready(function () {
 						name: 'model',
 						value: option,
 					})
-					.change(onChangeModelSelect)
+					.change((event) => {
+						selectedModel = event.target.value;
+						createWeightsElementsCallback(event.target.value);
+					})
 			)
 			.append(
 				$('<label>')
@@ -140,12 +98,86 @@ $(document).ready(function () {
 			)
 			.append($('<br>'));
 	});
+};
 
+const createWeightsElements = (selectedModel) => {
+	selectedWeights = Object.keys(modelsTable[selectedModel]);
+	$('#divRadioSelectWeights').empty();
+	selectedWeights.map((option, index) => {
+		$('#divRadioSelectWeights')
+			.append(
+				$('<input>')
+					.prop({
+						type: 'radio',
+						id: option,
+						name: 'weights',
+						value: option,
+					})
+					.change((event) => {
+						selectedWeights = event.target.value;
+					})
+			)
+			.append(
+				$('<label>')
+					.prop({
+						for: option,
+					})
+					.text(option)
+			)
+			.append($('<br>'));
+	});
+};
+const runDetector = async (imageUrl, scaleFactor) => {
+	var imageObject = new window.Image();
+	const res = await fetch(imageUrl);
+	const imageBlob = await res.blob();
+	const imageObjectURL = URL.createObjectURL(imageBlob);
+	imageObject.src = imageObjectURL;
+	imageObject.addEventListener('load', async () => {
+		const [selBboxes, scores, classIndices] = await yoloV3.detectFrame(
+			imageObject
+		);
+		draw.renderOnImage(
+			imageObject,
+			selBboxes,
+			scores,
+			classIndices,
+			classNames,
+			imageObject.width * scaleFactor,
+			imageObject.height * scaleFactor
+		);
+	});
+};
+
+$(document).ready(function () {
+	// disable spinners:
+	$('#waitLoadingModel').hide();
+	$('#waitYolo').hide();
+
+	// arrange model. Note set  createWeightsElements callback:
+	createModelSelectElements(createWeightsElements);
+
+	// todo - create detector with parameter so init is mode clear???
+	// arrange modell load elements:
+	$('#loadModel').text('Load Model');
+	$('#loadModel').click((event) =>
+		createDetector(modelsTable, selectedModel, selectedWeights)
+	);
+
+	// Load model and detector with default selections on init:
+	createWeightsElements('YoloV3Tiny');
+	createDetector(modelsTable, selectedModel, selectedWeights);
+	// mark selected buttons:
 	$("input[id|='YoloV3Tiny']").attr('checked', true);
-
-	// $('#YoloV3').attr('checked', true);
-	createWeightsButtons('YoloV3Tiny');
 	$("input[id|='coco']").attr('checked', true);
+
+	// arrange scale factor elements:
+	var scaleFactor = 0.125;
+	$('#scale').text('x' + scaleFactor);
+	$('#scale').click(() => {
+		scaleFactor = scaleFactor * 2 > 1 ? 0.125 : scaleFactor * 2;
+		$('#scale').text('x' + scaleFactor);
+	});
 
 	const cocoImages = cocoExamples.cocoImages;
 	var selectedExample = cocoImages[0];
@@ -167,28 +199,8 @@ $(document).ready(function () {
 	$('#runYolo').click(async () => {
 		$('#waitYolo').show();
 
-		var imageObject = new window.Image();
-		const res = await fetch(exampleUrl);
-		const imageBlob = await res.blob();
-		const imageObjectURL = URL.createObjectURL(imageBlob);
-		imageObject.src = imageObjectURL;
-		imageObject.addEventListener('load', async () => {
-			const [selBboxes, scores, classIndices] = await yoloV3.detectFrame(
-				imageObject
-			);
-			console.log(selBboxes);
-			console.log('selBboxes');
+		await runDetector(exampleUrl, scaleFactor);
 
-			draw.renderOnImage(
-				imageObject,
-				selBboxes,
-				scores,
-				classIndices,
-				classNames,
-				imageObject.width * scaleFactor,
-				imageObject.height * scaleFactor
-			);
-		});
 		$('#waitYolo').hide();
 	});
 });
