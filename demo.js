@@ -6,7 +6,6 @@ import configNms from './configs/configNms.json' assert { type: 'json' };
 import configRender from './configs/configRender.json' assert { type: 'json' };
 
 import cocoExamples from './examples/cocoExamples.json' assert { type: 'json' };
-var yoloV3 = '';
 
 const font = configRender.font;
 const lineWidth = configRender.lineWidth;
@@ -14,10 +13,10 @@ const lineColor = configRender.lineColor;
 const textColor = configRender.textColor;
 const textBackgoundColor = configRender.textBackgoundColor;
 
-var model = '';
-var anchors = '';
+// var model = '';
+// var anchors = '';
+var yoloV3 = '';
 var classNames = '';
-var nClasses = '';
 
 const modelsTable = configModel.models;
 const models = Object.keys(modelsTable);
@@ -45,14 +44,28 @@ $(document).ready(function () {
 		const { modelUrl, anchorsUrl, classNamesUrl } =
 			modelsTable[selectedModel][selectedWeights];
 
-		[model, anchors, classNames] = await createModel(
+		const [model, anchors, classNamesString] = await createModel(
 			modelUrl,
 			anchorsUrl,
 			classNamesUrl
 		);
-		classNames = classNames.split(/\r?\n/);
-		nClasses = classNames.length;
+		classNames = classNamesString.split(/\r?\n/);
 
+		$('#waitLoadingModel').hide();
+
+		$('#loadedModelTilte').text(
+			'Loaded: ' + selectedModel + '+' + selectedWeights
+		);
+		return [model, anchors, classNames];
+	};
+
+	const onLoadModel = async () => {
+		const [model, anchors, classNames] = await loadModel(
+			modelsTable,
+			selectedModel,
+			selectedWeights
+		);
+		const nClasses = classNames.length;
 		const { scoreTHR, iouTHR, maxBoxes } = configNms;
 
 		yoloV3 = new YoloV3(
@@ -63,16 +76,6 @@ $(document).ready(function () {
 			iouTHR,
 			maxBoxes
 		);
-
-		$('#waitLoadingModel').hide();
-
-		$('#loadedModelTilte').text(
-			'Loaded: ' + selectedModel + '+' + selectedWeights
-		);
-	};
-
-	const onLoadModel = async () => {
-		await loadModel(modelsTable, selectedModel, selectedWeights);
 	};
 	$('#waitLoadingModel').hide();
 	onLoadModel();

@@ -44,13 +44,16 @@
 
 			<div class="form-control border-success text-center mb-2">
 				<button id="loadModel"></button>
+         
 				<div id="loadedModelTilte"></div>
-			</div>
-			<div
+            <div
 				class="spinner-border text-primary"
 				id="waitLoadingModel"
 				role="status"
-			>
+			/>
+          
+			</div>
+		
 				<span class="visually-hidden">Loading...</span>
 			</div>
 
@@ -75,7 +78,13 @@
 
 			<div class="form-control border-success text-center mb-2">
 				<button id="runYolo"></button>
+				<div
+					class="spinner-border text-primary"
+					id="waitYolo"
+					role="status"
+				/>
 			</div>
+
 			<div id="buttons"></div>
 			<canvas id="canvas"></canvas>
 		</div>
