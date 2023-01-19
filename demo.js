@@ -32,11 +32,11 @@ const draw = new Render(
 	textColor,
 	textBackgoundColor
 );
-const loadModel = async (selectedModel, selectedWeights) => {
+const loadModel = async (selModel, selWeights) => {
 	$('#waitLoadingModel').show();
 
 	const { modelUrl, anchorsUrl, classNamesUrl } =
-		modelsTable[selectedModel][selectedWeights];
+		modelsTable[selModel][selWeights];
 
 	const [model, anchors, classNamesString] = await createModel(
 		modelUrl,
@@ -47,16 +47,11 @@ const loadModel = async (selectedModel, selectedWeights) => {
 
 	$('#waitLoadingModel').hide();
 
-	$('#loadedModelTilte').text(
-		'Loaded: ' + selectedModel + '+' + selectedWeights
-	);
+	$('#loadedModelTilte').text('Loaded: ' + selModel + '+' + selWeights);
 	return [model, anchors, classNames];
 };
-const createDetector = async (selectedModel, selectedWeights) => {
-	const [model, anchors, classNames] = await loadModel(
-		selectedModel,
-		selectedWeights
-	);
+const createDetector = async (selModel, selWeights) => {
+	const [model, anchors, classNames] = await loadModel(selModel, selWeights);
 	const nClasses = classNames.length;
 	const { scoreTHR, iouTHR, maxBoxes } = configNms;
 
