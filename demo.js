@@ -5,7 +5,12 @@ import configModel from './configs/configModel.json' assert { type: 'json' };
 import configNms from './configs/configNms.json' assert { type: 'json' };
 import configRender from './configs/configRender.json' assert { type: 'json' };
 
-import cocoExamples from './examples/cocoExamples.json' assert { type: 'json' };
+var yoloV3 = '';
+var classNames = '';
+
+const modelsTable = configModel.models;
+const imageUrl =
+	'https://cdn.pixabay.com/photo/2023/01/01/16/35/street-7690347_960_720.jpg';
 
 const font = configRender.font;
 const lineWidth = configRender.lineWidth;
@@ -13,17 +18,6 @@ const lineColor = configRender.lineColor;
 const textColor = configRender.textColor;
 const textBackgoundColor = configRender.textBackgoundColor;
 
-// var model = '';
-// var anchors = '';
-var yoloV3 = '';
-var classNames = '';
-
-const modelsTable = configModel.models;
-const models = Object.keys(modelsTable);
-var selectedModel = Object.keys(modelsTable)[1];
-var selectedWeights = Object.keys(modelsTable[selectedModel])[0];
-
-// const canvas = $('#canvas')[0];
 const draw = new Render(
 	canvas,
 	lineWidth,
@@ -32,11 +26,16 @@ const draw = new Render(
 	textColor,
 	textBackgoundColor
 );
-const loadModel = async (selModel, selWeights) => {
-	$('#waitLoadingModel').show();
 
+const onSelectModel = async (event) => {
+	$('#runYolo').attr('disabled', true);
+
+	$('#loadingModelSpinner').show();
+
+	console.log('onSelectModel', event.target.value);
+	console.log('onSelectModel', event.target);
 	const { modelUrl, anchorsUrl, classNamesUrl } =
-		modelsTable[selModel][selWeights];
+		modelsTable[event.target.value];
 
 	const [model, anchors, classNamesString] = await createModel(
 		modelUrl,
@@ -44,17 +43,8 @@ const loadModel = async (selModel, selWeights) => {
 		classNamesUrl
 	);
 	classNames = classNamesString.split(/\r?\n/);
-
-	$('#waitLoadingModel').hide();
-
-	$('#loadedModelTilte').text('Loaded: ' + selModel + '+' + selWeights);
-	return [model, anchors, classNames];
-};
-const createDetector = async (selModel, selWeights) => {
-	const [model, anchors, classNames] = await loadModel(selModel, selWeights);
 	const nClasses = classNames.length;
 	const { scoreTHR, iouTHR, maxBoxes } = configNms;
-
 	yoloV3 = new YoloV3(
 		model,
 		anchors.anchor,
@@ -63,64 +53,13 @@ const createDetector = async (selModel, selWeights) => {
 		iouTHR,
 		maxBoxes
 	);
+
+	$('#loadingModelSpinner').hide();
+	$('#runYolo').attr('disabled', false);
 };
 
-const createModelSelectElements = (createWeightsElementsCallback) => {
-	// model select butttons
-	models.map((option, index) => {
-		$('#divRadioSelectModel')
-			.append(
-				$('<input>')
-					.prop({
-						type: 'radio',
-						id: option,
-						name: 'model',
-						value: option,
-					})
-					.change((event) => {
-						selectedModel = event.target.value;
-						createWeightsElementsCallback(event.target.value);
-					})
-			)
-			.append(
-				$('<label>')
-					.prop({
-						for: option,
-					})
-					.text(option)
-			)
-			.append($('<br>'));
-	});
-};
-
-const createWeightsElements = (selectedModel) => {
-	const weights = Object.keys(modelsTable[selectedModel]);
-	$('#divRadioSelectWeights').empty();
-	weights.map((option, index) => {
-		$('#divRadioSelectWeights')
-			.append(
-				$('<input>')
-					.prop({
-						type: 'radio',
-						id: option,
-						name: 'weights',
-						value: option,
-					})
-					.change((event) => {
-						selectedWeights = event.target.value;
-					})
-			)
-			.append(
-				$('<label>')
-					.prop({
-						for: option,
-					})
-					.text(option)
-			)
-			.append($('<br>'));
-	});
-};
-const runDetector = async (imageUrl, scaleFactor) => {
+const onClickRunYolo = async (yoloV3, imageUrl) => {
+	$('#runYoloSpinner').show();
 	var imageObject = new window.Image();
 	const res = await fetch(imageUrl);
 	const imageBlob = await res.blob();
@@ -136,64 +75,32 @@ const runDetector = async (imageUrl, scaleFactor) => {
 			scores,
 			classIndices,
 			classNames,
-			imageObject.width * scaleFactor,
-			imageObject.height * scaleFactor
+			imageObject.width,
+			imageObject.height
 		);
 	});
+	$('#runYoloSpinner').hide();
 };
 
 $(document).ready(function () {
-	// disable spinners:
-	$('#waitLoadingModel').hide();
-	$('#waitYolo').hide();
-
-	// arrange model. Note set  createWeightsElements callback:
-	createModelSelectElements(createWeightsElements);
-
-	// todo - create detector with parameter so init is mode clear???
-	// arrange modell load elements:
-	$('#loadModel').text('Load Model');
-	$('#loadModel').click((event) =>
-		createDetector(selectedModel, selectedWeights)
-	);
-
-	// Load model and detector with default selections on init:
-	createWeightsElements(selectedModel);
-	createDetector(selectedModel, selectedWeights);
-	// mark selected buttons:
-	$('#' + selectedModel).attr('checked', true);
-	$('#' + selectedWeights).attr('checked', true);
-
-	// Select InputExample elements
-	const cocoImages = cocoExamples.cocoImages;
-	var selectedExample = cocoImages[0];
-	var exampleUrl = selectedExample.url;
-	$('#selectedExampleTitle').text('Title: ' + selectedExample.title);
-	cocoImages.map((option, index) => {
-		$('#selectExample').append(new Option(option.url, index));
+	$('#loadingModelSpinner').hide();
+	$('#runYoloSpinner').hide();
+	const models = Object.keys(modelsTable);
+	models.map((option, index) => {
+		$('#divRadioSelectModel')
+			.append(
+				$('<input>')
+					.prop({ type: 'radio', id: option, name: 'model', value: option })
+					.change((event) => onSelectModel(event))
+			)
+			.append(
+				$('<label>')
+					.prop({
+						for: option,
+					})
+					.text(option)
+			)
+			.append($('<br>'));
 	});
-	$('#selectExample').change((event) => {
-		selectedExample = cocoImages[event.target.value];
-		exampleUrl = selectedExample.url;
-
-		$('#selectedExampleTitle').text(selectedExample.title);
-		// selecteTitle = cocoImages[event.target.value].title;
-	});
-
-	// arrange scale factor elements:
-	var scaleFactor = 0.125;
-	$('#scale').text('x' + scaleFactor);
-	$('#scale').click(() => {
-		scaleFactor = scaleFactor * 2 > 1 ? 0.125 : scaleFactor * 2;
-		$('#scale').text('x' + scaleFactor);
-	});
-
-	$('#runYolo').text('Run Yolo');
-	$('#runYolo').click(async () => {
-		$('#waitYolo').show();
-
-		await runDetector(exampleUrl, scaleFactor);
-
-		$('#waitYolo').hide();
-	});
+	$('#runYolo').click(onClickRunYolo(yoloV3, imageUrl));
 });

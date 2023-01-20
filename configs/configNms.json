@@ -1,5 +1,5 @@
 {
-  "maxBoxes": 100,
-  "scoreTHR": 0.5,
-  "iouTHR": 0.1
+	"maxBoxes": 100,
+	"scoreTHR": 0.1,
+	"iouTHR": 0.1
 }
