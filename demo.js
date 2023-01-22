@@ -68,11 +68,15 @@ const onClickRunYolo = async (yoloV3, draw, imageUrl) => {
 };
 
 $(document).ready(function () {
+	$('#title').html(
+		'<h3 class="text-center text-bg-primary mt-2">YoloV3TfJs</h3><br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
+	);
 	// disable button before any model loaded
 	$('#runYolo').attr('disabled', true);
 	// disable spinners
 	$('#loadingModelSpinner').hide();
 	$('#runYoloSpinner').hide();
+	$('#showUrl').text('Credit: ' + imageUrl);
 
 	// init renderer:
 	const font = configRender.font;

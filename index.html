@@ -26,7 +26,7 @@
 	</head>
 	<body style="font-size: 14px">
 		<div class="container">
-
+<div id="title"></div>
 			<div class="form-control border-success mb-2">
 				<div id="divRadioSelectModel"></div>
 			
@@ -35,6 +35,7 @@
 				id="loadingModelSpinner"
 				role="status"
 			/>
+			<label>Loading</label>
 			</div>
 			<div class="text-center">
 				<button  id="runYolo">Run Yolo</button>
@@ -43,9 +44,12 @@
 					id="runYoloSpinner"
 					role="status"
 				/>
+				<label>Wait</label>
+
 			</div>
 		</div>
 	</div>
+	<div id="showUrl"></div>
 
 			<canvas id="canvas"></canvas>
 	</div>
