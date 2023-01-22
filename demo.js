@@ -30,6 +30,15 @@ const onSelectModel = async (event) => {
 	classNames = classNamesString.split(/\r?\n/);
 	const nClasses = classNames.length;
 	const { scoreTHR, iouTHR, maxBoxes } = configNms;
+	$('#paramsDisplay').html(
+		'<b>Params</b>:</br>scoreTHR: ' +
+			scoreTHR.toString() +
+			', iouTHR: ' +
+			iouTHR.toString() +
+			', nClasses: ' +
+			nClasses.toString()
+	);
+
 	yoloV3 = new YoloV3(
 		model,
 		anchors.anchor,
@@ -69,8 +78,9 @@ const onClickRunYolo = async (yoloV3, draw, imageUrl) => {
 
 $(document).ready(function () {
 	$('#title').html(
-		'<h3 class="text-center text-bg-primary mt-2">YoloV3TfJs</h3><br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
+		'<h3 class="text-center text-bg-primary mt-2">YoloV3TfJs</h3><br/>A minimal overhead demo of YoloV3<br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
 	);
+
 	// disable button before any model loaded
 	$('#runYolo').attr('disabled', true);
 	// disable spinners
