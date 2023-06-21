@@ -1,4 +1,4 @@
-import { YoloV3, createModel } from './YoloV3.js';
+import { YoloV5, createModel } from './YoloV5.js';
 import Render from './Render.js';
 
 import configModel from './configs/configModel.json' assert { type: 'json' };
@@ -7,7 +7,7 @@ import configRender from './configs/configRender.json' assert { type: 'json' };
 
 const modelsTable = configModel.models;
 var classNames = '';
-var yoloV3 = '';
+var yoloV5 = '';
 
 const imageUrl =
 	'https://cdn.pixabay.com/photo/2023/01/01/16/35/street-7690347_960_720.jpg';
@@ -39,7 +39,7 @@ const onSelectModel = async (event) => {
 			nClasses.toString()
 	);
 
-	yoloV3 = new YoloV3(
+	yoloV5 = new YoloV5(
 		model,
 		anchors.anchor,
 		nClasses,
@@ -60,7 +60,7 @@ const onClickRunYolo = async (yoloV3, draw, imageUrl) => {
 	const imageObjectURL = URL.createObjectURL(imageBlob);
 	imageObject.src = imageObjectURL;
 	imageObject.addEventListener('load', async () => {
-		const [selBboxes, scores, classIndices] = await yoloV3.detectFrame(
+		const [selBboxes, scores, classIndices, masks] = await yoloV5.detectFrame(
 			imageObject
 		);
 		draw.renderOnImage(
@@ -78,7 +78,7 @@ const onClickRunYolo = async (yoloV3, draw, imageUrl) => {
 
 $(document).ready(function () {
 	$('#title').html(
-		'<h3 class="text-center text-bg-primary mt-2">YoloV3TfJs</h3><br/>A minimal overhead demo of YoloV3<br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
+		'<h3 class="text-center text-bg-primary mt-2">YoloV5TfJs</h3><br/>A minimal overhead demo of YoloV5<br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
 	);
 
 	// disable button before any model loaded
@@ -122,5 +122,5 @@ $(document).ready(function () {
 			.append($('<br>'));
 	});
 	// assign run button cbk
-	$('#runYolo').click(() => onClickRunYolo(yoloV3, draw, imageUrl));
+	$('#runYolo').click(() => onClickRunYolo(yoloV5, draw, imageUrl));
 });
