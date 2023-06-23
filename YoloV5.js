@@ -1,25 +1,25 @@
+// scale img1 scaled boxes to img0 scale: sub padded value and rescale
 const scale_boxes = (img1_shape, boxes, img0_w, img0_h) => {
 	// Rescale boxes (xyxy) from img1_shape to img0_shape
+	// gain - resize factor
 	const gain = Math.min(img1_shape[0] / img0_w, img1_shape[1] / img0_h); // gain  = old / new
-	const pad =
-		((img1_shape[1] - img0_h * gain) / 2, (img1_shape[0] - img0_w * gain) / 2); // wh padding
+	//
+	const pad = tf.tensor1d([
+		(img1_shape[1] - img0_h * gain) / 2,
+		(img1_shape[0] - img0_w * gain) / 2,
+	]); // wh padding
+	// calc (boxes-pad)/gain:
+	const tiledPad = pad.tile([2]).expandDims(0).tile([boxes.shape[0], 1]);
+	boxes = boxes.sub(tiledPad).div(gain);
 
-	const [xmin, ymin, xmax, ymax] = tf.split(
-		boxes.expandDims([1]),
-		[1, 1, 1, 1],
-		-1
-	);
-	// xmin = xmin - pad[0];
-	// xmax = xmax - pad[0];
-	// ymin = ymin - pad[1];
-	// ymax = ymax - pad[1];
+	// clip to image dims:
+	var [xmin, ymin, xmax, ymax] = tf.split(boxes, [1, 1, 1, 1], -1);
+	xmin = xmin.clipByValue(0, img0_w);
+	ymin = xmax.clipByValue(0, img0_w);
+	xmax = ymin.clipByValue(0, img0_h);
+	ymax = ymax.clipByValue(0, img0_h);
+	boxes = tf.concat([xmin, ymin, xmax, ymax], -1);
 
-	// boxes[..., :4] /= gain
-
-	// boxes[..., [0, 2]] -= pad[0]  # x padding
-	// // boxes[..., [1, 3]] -= pad[1]  # y padding
-	// // boxes[..., :4] /= gain
-	// // clip_boxes(boxes, img0_shape)
 	return boxes;
 };
 
@@ -87,7 +87,6 @@ const process_mask = (protos, masksIn, bboxes, ih, iw) => {
 	// )
 	// # return masks.gt_(0.5)
 };
-/////////////////////
 
 const configRender = {
 	font: '20px serif',
@@ -192,23 +191,19 @@ class YoloV5 {
 			imageFrame.height
 		);
 
-		const scaled_Boxes = scale_boxes(
-			imageTensor.shape.slice([0], [1]),
+		const scaledBoxes = scale_boxes(
+			imageTensor.shape.slice(1, 3),
 			selBboxes,
 			imageFrame.width,
 			imageFrame.height
 		).round(); // rescale boxes to im0 size
-
-		//
-		// tf.engine().endScope();
-		// return selBboxes, selScores, selclassIndices, selMasks;
-		// return nmsPromise;
 
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
 		const classIndicesArray = selclassIndices.array();
 		const masksArray = selMasks.array();
 
+		scaledBoxes.dispose();
 		selBboxes.dispose();
 		selScores.dispose();
 		selclassIndices.dispose();
@@ -221,27 +216,6 @@ class YoloV5 {
 			classIndicesArray,
 			masksArray,
 		]);
-		return reasultArrays;
-		// reasultArrays.then((res) => {
-		// 	console.log('res');
-		// 	/return res;
-		// });
-		// return res;
-
-		// const nmsPromise = nms(
-		// 	bboxes,
-		// 	scores,
-		// 	classIndices,
-		// 	masks,
-		// 	this.iouTHR,
-		// 	this.scoreTHR,
-		// 	this.maxBoxes
-		// ).then((reasultArrays) => {
-		// 	tf.engine().endScope();
-
-		// 	return reasultArrays;
-		// });
-		// return nmsPromise;
 	};
 }
 
@@ -269,17 +243,6 @@ const nms = (
 		var selectedScores = scores.gather(nmsResults);
 		var selectedMasks = masks.gather(nmsResults);
 
-		// const bboxesArray = selectedBboxes.array();
-		// const scoresArray = selectedScores.array();
-		// const classIndicesArray = selectedClasses.array();
-		// const masksArray = selectedMasks.array();
-
-		// let reasultArrays = Promise.all([
-		// 	bboxesArray,
-		// 	scoresArray,
-		// 	classIndicesArray,
-		// 	masksArray,
-		// ]);
 		var reasultArrays = Promise.all([
 			selectedBboxes,
 			selectedScores,
@@ -287,10 +250,6 @@ const nms = (
 			selectedMasks,
 		]);
 
-		// selectedBboxes.dispose();
-		// selectedClasses.dispose();
-		// selectedScores.dispose();
-		// selectedMasks.dispose();
 		return reasultArrays;
 	});
 
@@ -338,10 +297,4 @@ const createModel = (modelUrl, anchorsUrl, classNamesUrl) => {
 	return promise;
 };
 
-// export { YoloV3 };
-// const yolo = {
-//   YoloPredictor: YoloPredictor,
-// };
-
-// module.exports = yolo;
 export { YoloV5, createModel };
