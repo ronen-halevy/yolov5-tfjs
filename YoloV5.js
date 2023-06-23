@@ -257,34 +257,6 @@ const nms = (
 	return nmsPromise;
 };
 
-function arrange_bbox(xy, wh) {
-	var grid_size = [xy.shape[1], xy.shape[1]];
-
-	var grid = tf.meshgrid(
-		tf.range(0, xy.shape[1], 1),
-		tf.range(0, xy.shape[1], 1)
-	);
-	var axis = -1;
-	grid = tf.stack(grid, axis);
-
-	axis = 2;
-	grid = grid.expandDims(axis);
-
-	xy = xy.add(tf.cast(grid, 'float32'));
-	xy = xy.div(tf.cast(grid_size, 'float32'));
-
-	var value1 = tf.scalar(2);
-	wh = wh.div(value1);
-	var xy_min = xy.sub(wh);
-	var xy_max = xy.add(wh);
-
-	var bbox = tf.concat([xy_min, xy_max], -1);
-	grid.dispose();
-	grid.dispose();
-
-	return bbox;
-}
-
 const createModel = (modelUrl, anchorsUrl, classNamesUrl) => {
 	const modelPromise = tf.loadGraphModel(modelUrl);
 	const anchorsPromise = fetch(anchorsUrl).then((response) => response.json());
