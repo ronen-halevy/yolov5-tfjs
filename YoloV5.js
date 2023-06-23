@@ -216,6 +216,7 @@ class YoloV5 {
 			classIndicesArray,
 			masksArray,
 		]);
+		return reasultArrays;
 	};
 }
 
