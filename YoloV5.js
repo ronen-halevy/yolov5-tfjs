@@ -66,29 +66,6 @@ const processMask = (protos, masksIn, bboxes, ih, iw) => {
 	// masks = tf.image.resizeBilinear(masks.expandDims(-1), [640, 640]);
 
 	return masks;
-
-	// downsampled_bboxes[:, 0] *= mw / iw
-	// downsampled_bboxes[:, 2] *= mw / iw
-	// downsampled_bboxes[:, 3] *= mh / ih
-	// downsampled_bboxes[:, 1] *= mh / ih
-
-	// ih, (iw = shape);
-	// # masks = (masks_in @ tf.Variable(protos.reshape(ch, -1))).sigmoid().reshape(-1, mh, mw)  # CHW
-	// masks =  tf.sigmoid(masks_in @ tf.reshape(protos, [ch, -1])  )# CHW
-	// masks = tf.reshape(masks, (-1, mh, mw))
-	// downsampled_bboxes = bboxes.copy()
-	// downsampled_bboxes[:, 0] *= mw / iw
-	// downsampled_bboxes[:, 2] *= mw / iw
-	// downsampled_bboxes[:, 3] *= mh / ih
-	// downsampled_bboxes[:, 1] *= mh / ih
-	// masks = crop_mask(masks, downsampled_bboxes)  # CHW
-	// if upsample:
-	//     # masks = F.interpolate(masks[None], shape, mode='bilinear', align_corners=False)[0]  # CHW
-	//     masks = tf.image.resize(masks[...,tf.newaxis], size=shape )
-	// return tf.math.greater(
-	//     tf.squeeze(masks, axis=-1), 0.5, name=None
-	// )
-	// # return masks.gt_(0.5)
 };
 
 const configRender = {
@@ -132,8 +109,6 @@ class YoloV5 {
 			[0xff, 0x37, 0xc7],
 		];
 		self.n = self.palette.length;
-
-		// self.pp = 'r'
 	}
 	getColor = (i) => {
 		const c = self.palette[i % self.n];
