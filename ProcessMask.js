@@ -40,7 +40,7 @@ class Colors {
 
 const masks = (maskPatterns, colors, preprocImage, alpha) => {
 	var colors = tf.cast(colors, 'float32').reshape([-1, 1, 1, 3]); //shape(n,1,1,3)
-	// maskPatterns = tf.cast(maskPatterns, 'float32').expandDims(-1); // (n,h,w,1)
+	maskPatterns = tf.cast(maskPatterns, 'float32'); // (n,h,w,1)
 
 	const masksColor = maskPatterns.mul(colors.mul(alpha)); // shape(n,h,w,3)
 	const invAlphMasks = tf.cumprod(tf.scalar(1).sub(maskPatterns.mul(alpha)), 0); // shape(n,h,w,1) where h=w=160
@@ -52,7 +52,11 @@ const masks = (maskPatterns, colors, preprocImage, alpha) => {
 		0
 	);
 
-	preprocImage = preprocImage.mul(invAlphMasksTail).add(mcs).mul(255);
+	preprocImage = preprocImage
+		.squeeze(0)
+		.mul(invAlphMasksTail.squeeze(0))
+		.add(mcs);
+
 	return preprocImage;
 };
 

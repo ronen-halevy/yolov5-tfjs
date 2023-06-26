@@ -62,7 +62,7 @@ const processMask = (protos, masksIn, bboxes, ih, iw) => {
 		],
 		-1
 	);
-	masks = crop_mask(masks, downsampled_bboxes);
+	masks.masks = crop_mask(masks, downsampled_bboxes);
 	// masks = tf.image.resizeBilinear(masks.expandDims(-1), [640, 640]);
 
 	return masks;
@@ -143,7 +143,7 @@ class YoloV5 {
 		return tf.concat([xmin, ymin, xmax, ymax], axis);
 	};
 
-	detectFrame = async (imageFrame) => {
+	detectFrame = async (imageFrame, canvas) => {
 		// tf.engine cleans intermidiate allocations avoids memory leak - equivalent to tf.tidy
 		tf.engine().startScope();
 		const imageHeight = 640;
@@ -204,8 +204,7 @@ class YoloV5 {
 		const alpha = 0.5;
 		const colorPaletteTens = tf.cast(colorPalette, 'float32');
 		const masksRes = masks(maskPatterns, colorPaletteTens, preprocImage, alpha);
-		// const canvas = document.createElement('canvas');
-		// const gg = await tf.browser.toPixels(masksRes.squeeze(0), canvas);
+		await tf.browser.toPixels(masksRes, canvas);
 
 		// tf.data.array(selclassIndices).forEachAsync((e) => console.log(e));
 
@@ -219,7 +218,7 @@ class YoloV5 {
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
 		const classIndicesArray = selclassIndices.array();
-		const masksResArray = masksRes.squeeze(0).array();
+		const masksResArray = masksRes.array();
 
 		scaledBoxes.dispose();
 		selBboxes.dispose();
@@ -235,11 +234,6 @@ class YoloV5 {
 			classIndicesArray,
 			masksResArray,
 		]);
-		reasultArrays.then((reasultArrays) => {
-			console.log(masksRes);
-			const canvas = document.createElement('canvas');
-			// const imm = await tf.browser.toPixels(maskPatterns.squeeze(0), canvas);
-		});
 
 		return reasultArrays;
 	};
