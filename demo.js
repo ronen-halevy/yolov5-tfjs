@@ -63,21 +63,7 @@ const onClickRunYolo = async (yoloV5, draw, imageUrl) => {
 	imageObject.addEventListener('load', async () => {
 		const [selBboxes, scores, classIndices, maskPatterns] =
 			await yoloV5.detectFrame(imageObject);
-		const alpha = 0.5;
-		// classIndices.forEach((box, idx) => {
 
-		// })
-		// const colorPalette = classIndices.map((classIndex) =>
-		// 	colors.getColor(classIndex)
-		// );
-		// const colors = classIndices.map((classIndex) => {
-		// 	self.colors.getColor(classIndex);
-		// });
-		// console.log(colorPalette);
-		// const colors1 = tf.tensor(colors, 'float32');
-		//masks(maskPatterns, colorPalette, image, alpha);
-
-		// draw.masks(masks, colors, image, alpha);
 		draw.renderOnImage(
 			imageObject,
 			selBboxes,
