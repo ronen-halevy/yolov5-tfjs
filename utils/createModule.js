@@ -29,7 +29,7 @@ var fs = require('fs');
 // line to remove:
 removeLine = 'export { YoloV5, createModel };';
 newLine =
-	'const yolov3 = {YoloV5: YoloV5, createModel: createModel} \nmodule.exports = yolov3';
+	'const yolov5 = {YoloV5: YoloV5, createModel: createModel} \nmodule.exports = yolov5';
 
 // 1. Remove line
 fs.readFile(src, { encoding: 'utf-8' }, function (err, data) {

@@ -239,5 +239,5 @@ const createModel = (modelUrl, classNamesUrl) => {
 	return promise;
 };
 
-const streamer = {YoloV5: YoloV5, createModel: createModel} 
-module.exports = streamer
+const yolov5 = {YoloV5: YoloV5, createModel: createModel} 
+module.exports = yolov5
