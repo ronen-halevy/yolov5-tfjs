@@ -17,8 +17,6 @@ const onSelectModel = async (event) => {
 
 	$('#loadingModelSpinner').show();
 
-	console.log('onSelectModel', event.target.value);
-	console.log('onSelectModel', event.target);
 	const { modelUrl, anchorsUrl, classNamesUrl } =
 		modelsTable[event.target.value];
 
@@ -61,11 +59,11 @@ const onClickRunYolo = async (yoloV5, draw, imageUrl) => {
 	imageObject.src = imageObjectURL;
 
 	imageObject.addEventListener('load', async () => {
-		const [selBboxes, scores, classIndices, maskPatterns] =
+		const [selBboxes, scores, classIndices, segmentedImage] =
 			await yoloV5.detectFrame(imageObject);
 
 		draw.renderOnImage(
-			imageObject,
+			segmentedImage,
 			selBboxes,
 			scores,
 			classIndices,

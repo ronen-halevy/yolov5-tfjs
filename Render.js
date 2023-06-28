@@ -77,7 +77,7 @@ class Render {
 	 */
 
 	renderOnImage = async (
-		image,
+		segmentedImage,
 		bboxes,
 		scores,
 		classIndices,
@@ -89,7 +89,11 @@ class Render {
 		this.canvas.width = imageWidth;
 		this.canvas.height = imageHeight;
 
-		context.drawImage(image, 0, 0, imageWidth, imageHeight);
+		// context.drawImage(image, 0, 0, imageWidth, imageHeight);
+		await tf.browser.toPixels(
+			tf.image.resizeBilinear(segmentedImage, [imageHeight, imageWidth]),
+			canvas
+		);
 
 		bboxes.forEach((box, idx) => {
 			this.renderBox(

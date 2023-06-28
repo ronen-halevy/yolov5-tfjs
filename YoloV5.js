@@ -1,21 +1,5 @@
 import { Colors, masks } from './ProcessMask.js';
 
-// scale img1 scaled boxes to img0 scale: sub padded value and rescale
-
-const scaleImage = (image, height, width) => {
-	return tf.image.resizeBilinear(image, [height, width]);
-};
-const scaleBoxes = (boxes, img0_h, img0_w) => {
-	var [xmin, ymin, xmax, ymax] = tf.split(boxes, [1, 1, 1, 1], -1);
-	xmin = xmin.mul(img0_w);
-	xmax = xmax.mul(img0_w);
-	ymin = ymin.mul(img0_h);
-	ymax = ymax.mul(img0_h);
-
-	boxes = tf.concat([xmin, ymin, xmax, ymax], -1);
-	return boxes;
-};
-
 // crop masks pixels which are not inside a bbox.
 const cropMask = (masks, boxes) => {
 	const [n, h, w] = masks.shape;
@@ -57,14 +41,6 @@ const processMask = (protos, masksIn, bboxes, ih, iw) => {
 		-1
 	);
 	return cropMask(masks, downsampled_bboxes);
-};
-
-const configRender = {
-	font: '20px serif',
-	lineWidth: 3,
-	lineColor: 'yellow',
-	textColor: 'blue',
-	textBackgoundColor: 'white',
 };
 
 class YoloV5 {
@@ -133,7 +109,7 @@ class YoloV5 {
 		return tf.concat([xmin, ymin, xmax, ymax], axis);
 	};
 
-	detectFrame = async (imageFrame, canvas) => {
+	detectFrame = async (imageFrame) => {
 		// tf.engine cleans intermidiate allocations avoids memory leak - equivalent to tf.tidy
 		tf.engine().startScope();
 		const imageHeight = 640;
@@ -194,39 +170,14 @@ class YoloV5 {
 		);
 		const alpha = 0.5;
 		const colorPaletteTens = tf.cast(colorPalette, 'float32');
-		var masksRes = masks(maskPatterns, colorPaletteTens, preprocImage, alpha);
-		masksRes = scaleImage(masksRes, imageFrame.height, imageFrame.width);
-
-		const scaledBoxes = scaleBoxes(
-			selBboxes,
-			imageFrame.height,
-			imageFrame.width
-		); //.round(); // rescale boxes to im0 size
-
-		canvas.width = imageFrame.width;
-		canvas.height = imageFrame.height;
-		const context = canvas.getContext('2d');
-		context.beginPath();
-		await tf.browser.toPixels(masksRes, canvas);
-
-		const gggg = scaledBoxes.arraySync();
-
-		gggg.forEach((bbox, idx) => {
-			context.rect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]);
-
-			context.stroke();
-		});
-
-		context.lineWidth = configRender.lineWidth;
-		context.strokeStyle = configRender.lineColor;
-		context.stroke();
+		const masksRes = masks(maskPatterns, colorPaletteTens, preprocImage, alpha);
 
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
 		const classIndicesArray = selclassIndices.array();
 		const masksResArray = masksRes.array();
 
-		scaledBoxes.dispose();
+		// scaledBoxes.dispose();
 		selBboxes.dispose();
 		selScores.dispose();
 		selclassIndices.dispose();
