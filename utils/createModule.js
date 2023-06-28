@@ -22,14 +22,14 @@ node createModule.js
 * @license LicenseHereIfApplicable
 
 */
-const src = 'YoloV3.js';
-const dst = 'YoloV3.module.js';
+const src = 'YoloV5.js';
+const dst = 'YoloV5.module.js';
 var fs = require('fs');
 
 // line to remove:
-removeLine = 'export { YoloV3, createModel };';
+removeLine = 'export { YoloV5, createModel };';
 newLine =
-	'const streamer = {YoloV3: YoloV3, createModel: createModel} \nmodule.exports = streamer';
+	'const streamer = {YoloV5: YoloV5, createModel: createModel} \nmodule.exports = streamer';
 
 // 1. Remove line
 fs.readFile(src, { encoding: 'utf-8' }, function (err, data) {
