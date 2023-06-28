@@ -1,46 +1,64 @@
-import { Colors, masks } from './ProcessMask.js';
-
 // crop masks pixels which are not inside a bbox.
-const cropMask = (masks, boxes) => {
-	const [n, h, w] = masks.shape;
-	const [xmin, ymin, xmax, ymax] = tf.split(
-		boxes.expandDims([1]),
-		[1, 1, 1, 1],
-		-1
+class Colors {
+	constructor(
+		canvas,
+		lineWidth,
+		lineColor,
+		font,
+		textColor,
+		textBackgoundColor
+	) {
+		self.palette = [
+			[0xff, 0x38, 0x38],
+			[0xff, 0x9d, 0x97],
+			[0xff, 0x70, 0x1f],
+			[0xff, 0xb2, 0x1d],
+			[0xcf, 0xd2, 0x31],
+			[0x48, 0xf9, 0x0a],
+			[0x92, 0xcc, 0x17],
+			[0x3d, 0xdb, 0x86],
+			[0x1a, 0x93, 0x34],
+			[0x00, 0xd4, 0xbb],
+			[0x2c, 0x99, 0xa8],
+			[0x00, 0xc2, 0xff],
+			[0x34, 0x45, 0x93],
+			[0x64, 0x73, 0xff],
+			[0x00, 0x18, 0xec],
+			[0x84, 0x38, 0xff],
+			[0x52, 0x00, 0x85],
+			[0xcb, 0x38, 0xff],
+			[0xff, 0x95, 0xc8],
+			[0xff, 0x37, 0xc7],
+		];
+		self.n = self.palette.length;
+	}
+	// self.pp = 'r'
+	getColor(i) {
+		const c = self.palette[i % self.n];
+		return [c[0] / 255, c[1] / 255, c[2] / 255];
+	}
+}
+
+const masks = (maskPatterns, colors, preprocImage, alpha) => {
+	var colors = tf.cast(colors, 'float32').reshape([-1, 1, 1, 3]); //shape(n,1,1,3)
+	maskPatterns = tf.cast(maskPatterns, 'float32'); // (n,h,w,1)
+
+	const masksColor = maskPatterns.mul(colors.mul(alpha)); // shape(n,h,w,3)
+	const invAlphMasks = tf.cumprod(tf.scalar(1).sub(maskPatterns.mul(alpha)), 0); // shape(n,h,w,1) where h=w=160
+
+	const mcs = tf.sum(masksColor.mul(invAlphMasks), 0).mul(2); // mask color summand shape(n,h,w,3)
+	const [invAlphMasksHead, invAlphMasksTail] = tf.split(
+		invAlphMasks,
+		[invAlphMasks.shape[0] - 1, 1],
+		0
 	);
 
-	const r = tf.range(0, w, 1, xmin.dtype).expandDims(0).expandDims(0); // array [0.....,w-1] dim: [1,1,w]
-	const c = tf.range(0, h, 1, xmin.dtype).expandDims(-1).expandDims(0); // array [0.....,h-1] dim: [1,h,1]
+	preprocImage = preprocImage
+		.squeeze(0)
+		.mul(invAlphMasksTail.squeeze(0))
+		.add(mcs);
 
-	// crop is masks pixels which are not inside a bbox.
-
-	const crop = r
-		.greaterEqual(xmin)
-		.mul(r.lessEqual(xmax))
-		.mul(c.greaterEqual(ymin))
-		.mul(c.lessEqual(ymax));
-
-	return masks.mul(crop); // ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
-};
-
-const processMask = (protos, masksIn, bboxes, ih, iw) => {
-	var [ch, mh, mw] = protos.shape;
-	const protosCols = protos.reshape([ch, -1]);
-	var masks = masksIn.matMul(protosCols).sigmoid().reshape([-1, mh, mw]);
-
-	var downsampled_bboxes = $.extend({}, bboxes);
-
-	var [xmin, ymin, xmax, ymax] = tf.split(downsampled_bboxes, [1, 1, 1, 1], -1);
-	downsampled_bboxes = tf.concat(
-		[
-			xmin.mul(masks.shape[1]),
-			ymin.mul(masks.shape[2]),
-			xmax.mul(masks.shape[1]),
-			ymax.mul(masks.shape[2]),
-		],
-		-1
-	);
-	return cropMask(masks, downsampled_bboxes);
+	return preprocImage;
 };
 
 class YoloV5 {
@@ -75,6 +93,55 @@ class YoloV5 {
 		];
 		self.n = self.palette.length;
 	}
+
+	///////////////////
+
+	cropMask = (masks, boxes) => {
+		const [n, h, w] = masks.shape;
+		const [xmin, ymin, xmax, ymax] = tf.split(
+			boxes.expandDims([1]),
+			[1, 1, 1, 1],
+			-1
+		);
+
+		const r = tf.range(0, w, 1, xmin.dtype).expandDims(0).expandDims(0); // array [0.....,w-1] dim: [1,1,w]
+		const c = tf.range(0, h, 1, xmin.dtype).expandDims(-1).expandDims(0); // array [0.....,h-1] dim: [1,h,1]
+
+		// crop is masks pixels which are not inside a bbox.
+
+		const crop = r
+			.greaterEqual(xmin)
+			.mul(r.lessEqual(xmax))
+			.mul(c.greaterEqual(ymin))
+			.mul(c.lessEqual(ymax));
+
+		return masks.mul(crop); // ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
+	};
+
+	processMask = (protos, masksIn, bboxes, ih, iw) => {
+		var [ch, mh, mw] = protos.shape;
+		const protosCols = protos.reshape([ch, -1]);
+		var masks = masksIn.matMul(protosCols).sigmoid().reshape([-1, mh, mw]);
+
+		var downsampled_bboxes = $.extend({}, bboxes);
+
+		var [xmin, ymin, xmax, ymax] = tf.split(
+			downsampled_bboxes,
+			[1, 1, 1, 1],
+			-1
+		);
+		downsampled_bboxes = tf.concat(
+			[
+				xmin.mul(masks.shape[1]),
+				ymin.mul(masks.shape[2]),
+				xmax.mul(masks.shape[1]),
+				ymax.mul(masks.shape[2]),
+			],
+			-1
+		);
+		return this.cropMask(masks, downsampled_bboxes);
+	};
+
 	getColor = (i) => {
 		const c = self.palette[i % self.n];
 		return [c[0] / 255, c[1] / 255, c[2] / 255];
@@ -151,7 +218,7 @@ class YoloV5 {
 		);
 
 		protos = protos.squeeze(0);
-		var maskPatterns = processMask(
+		var maskPatterns = this.processMask(
 			protos,
 			selMasksCoeffs,
 			selBboxes,
