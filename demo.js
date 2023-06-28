@@ -17,14 +17,9 @@ const onSelectModel = async (event) => {
 
 	$('#loadingModelSpinner').show();
 
-	const { modelUrl, anchorsUrl, classNamesUrl } =
-		modelsTable[event.target.value];
+	const { modelUrl, classNamesUrl } = modelsTable[event.target.value];
 
-	const [model, anchors, classNamesString] = await createModel(
-		modelUrl,
-		anchorsUrl,
-		classNamesUrl
-	);
+	const [model, classNamesString] = await createModel(modelUrl, classNamesUrl);
 	classNames = classNamesString.split(/\r?\n/);
 	const nClasses = classNames.length;
 	const { scoreTHR, iouTHR, maxBoxes } = configNms;
@@ -37,14 +32,7 @@ const onSelectModel = async (event) => {
 			nClasses.toString()
 	);
 
-	yoloV5 = new YoloV5(
-		model,
-		anchors.anchor,
-		nClasses,
-		scoreTHR,
-		iouTHR,
-		maxBoxes
-	);
+	yoloV5 = new YoloV5(model, nClasses, scoreTHR, iouTHR, maxBoxes);
 
 	$('#loadingModelSpinner').hide();
 	$('#runYolo').attr('disabled', false);

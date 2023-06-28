@@ -44,9 +44,8 @@ const processMask = (protos, masksIn, bboxes, ih, iw) => {
 };
 
 class YoloV5 {
-	constructor(model, anchors, nClasses, scoreTHR, iouTHR, maxBoxes) {
+	constructor(model, nClasses, scoreTHR, iouTHR, maxBoxes) {
 		this.model = model;
-		this.anchors = anchors;
 		this.nClasses = nClasses;
 		this.scoreTHR = scoreTHR;
 		this.iouTHR = iouTHR;
@@ -91,9 +90,8 @@ class YoloV5 {
 		this.maxBoxes = val;
 	};
 
-	setModelParams = (model, anchors, nClasses) => {
+	setModelParams = (model, nClasses) => {
 		this.model = model;
-		this.anchors = anchors;
 		this.nClasses = nClasses;
 	};
 
@@ -233,16 +231,11 @@ const nms = (
 	return nmsPromise;
 };
 
-const createModel = (modelUrl, anchorsUrl, classNamesUrl) => {
+const createModel = (modelUrl, classNamesUrl) => {
 	const modelPromise = tf.loadGraphModel(modelUrl);
-	const anchorsPromise = fetch(anchorsUrl).then((response) => response.json());
 	const classNamesPromise = fetch(classNamesUrl).then((x) => x.text());
 
-	const promise = Promise.all([
-		modelPromise,
-		anchorsPromise,
-		classNamesPromise,
-	]);
+	const promise = Promise.all([modelPromise, classNamesPromise]);
 	return promise;
 };
 
