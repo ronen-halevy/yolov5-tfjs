@@ -1,31 +1,23 @@
 import { Colors, masks } from './ProcessMask.js';
 
 // scale img1 scaled boxes to img0 scale: sub padded value and rescale
-const scale_boxes = (img1_shape, boxes, img0_w, img0_h) => {
-	// Rescale boxes (xyxy) from img1_shape to img0_shape
-	// gain - resize factor
-	const gain = Math.min(img1_shape[0] / img0_w, img1_shape[1] / img0_h); // gain  = old / new
-	//
-	const pad = tf.tensor1d([
-		(img1_shape[1] - img0_h * gain) / 2,
-		(img1_shape[0] - img0_w * gain) / 2,
-	]); // wh padding
-	// calc (boxes-pad)/gain:
-	const tiledPad = pad.tile([2]).expandDims(0).tile([boxes.shape[0], 1]);
-	boxes = boxes.sub(tiledPad).div(gain);
 
-	// clip to image dims:
+const scaleImage = (image, height, width) => {
+	return tf.image.resizeBilinear(image, [height, width]);
+};
+const scaleBoxes = (boxes, img0_h, img0_w) => {
 	var [xmin, ymin, xmax, ymax] = tf.split(boxes, [1, 1, 1, 1], -1);
-	xmin = xmin.clipByValue(0, img0_w);
-	ymin = xmax.clipByValue(0, img0_w);
-	xmax = ymin.clipByValue(0, img0_h);
-	ymax = ymax.clipByValue(0, img0_h);
-	boxes = tf.concat([xmin, ymin, xmax, ymax], -1);
+	xmin = xmin.mul(img0_w);
+	xmax = xmax.mul(img0_w);
+	ymin = ymin.mul(img0_h);
+	ymax = ymax.mul(img0_h);
 
+	boxes = tf.concat([xmin, ymin, xmax, ymax], -1);
 	return boxes;
 };
 
-const crop_mask = (masks, boxes) => {
+// crop masks pixels which are not inside a bbox.
+const cropMask = (masks, boxes) => {
 	const [n, h, w] = masks.shape;
 	const [xmin, ymin, xmax, ymax] = tf.split(
 		boxes.expandDims([1]),
@@ -33,39 +25,38 @@ const crop_mask = (masks, boxes) => {
 		-1
 	);
 
-	const r = tf.range(0, w, 1, xmin.dtype).expandDims(0).expandDims(0);
-	const c = tf.range(0, h, 1, xmin.dtype).expandDims(-1).expandDims(0);
-	const crop =
-		tf.cast(r >= xmin, 'float32') *
-		tf.cast(r < xmax, 'float32') *
-		tf.cast(c >= ymin, 'float32') *
-		tf.cast(c < ymax, 'float32');
+	const r = tf.range(0, w, 1, xmin.dtype).expandDims(0).expandDims(0); // array [0.....,w-1] dim: [1,1,w]
+	const c = tf.range(0, h, 1, xmin.dtype).expandDims(-1).expandDims(0); // array [0.....,h-1] dim: [1,h,1]
+
+	// crop is masks pixels which are not inside a bbox.
+
+	const crop = r
+		.greaterEqual(xmin)
+		.mul(r.lessEqual(xmax))
+		.mul(c.greaterEqual(ymin))
+		.mul(c.lessEqual(ymax));
+
 	return masks.mul(crop); // ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
 };
 
 const processMask = (protos, masksIn, bboxes, ih, iw) => {
 	var [ch, mh, mw] = protos.shape;
-	// masks =  tf.sigmoid(masks_in @ tf.reshape(protos, [ch, -1])  )# CHW
-	const protosCols = protos.reshape([ch, -1]); //.print();
+	const protosCols = protos.reshape([ch, -1]);
 	var masks = masksIn.matMul(protosCols).sigmoid().reshape([-1, mh, mw]);
 
 	var downsampled_bboxes = $.extend({}, bboxes);
-	// console.log('ggggg');
-	// /downsampled_bboxes = tf.concat([mw / iw, mh / ih, mw / iw, mh / ih], -1);
+
 	var [xmin, ymin, xmax, ymax] = tf.split(downsampled_bboxes, [1, 1, 1, 1], -1);
 	downsampled_bboxes = tf.concat(
 		[
-			xmin.mul(mw / iw),
-			ymin.mul(mh / ih),
-			xmax.mul(mw / iw),
-			ymax.mul(mh / ih),
+			xmin.mul(masks.shape[1]),
+			ymin.mul(masks.shape[2]),
+			xmax.mul(masks.shape[1]),
+			ymax.mul(masks.shape[2]),
 		],
 		-1
 	);
-	masks.masks = crop_mask(masks, downsampled_bboxes);
-	// masks = tf.image.resizeBilinear(masks.expandDims(-1), [640, 640]);
-
-	return masks;
+	return cropMask(masks, downsampled_bboxes);
 };
 
 const configRender = {
@@ -75,7 +66,6 @@ const configRender = {
 	textColor: 'blue',
 	textBackgoundColor: 'white',
 };
-// tf.setBackend('webgl');
 
 class YoloV5 {
 	constructor(model, anchors, nClasses, scoreTHR, iouTHR, maxBoxes) {
@@ -159,7 +149,7 @@ class YoloV5 {
 
 		preds = preds.squeeze(0);
 		const nc = preds.shape[1] - nm - 5; // n of classes
-		const mi = 5 + nc; // mask start index
+		// const mi = 5 + nc; // mask start index
 
 		var axis = -1;
 		var [bboxes, confidences, classProbs, masksCoeffs] = tf.split(
@@ -175,7 +165,8 @@ class YoloV5 {
 		confidences.dispose();
 		bboxes = this.xywh2xyxy(bboxes);
 
-		const [selBboxes, selScores, selclassIndices, selMasksCoeffs] = await nms(
+		// ronen - var only bbox todo
+		var [selBboxes, selScores, selclassIndices, selMasksCoeffs] = await nms(
 			bboxes,
 			scores,
 			classIndices,
@@ -184,7 +175,7 @@ class YoloV5 {
 			this.scoreTHR,
 			this.maxBoxes
 		);
-		// return [selBboxes, selScores, selclassIndices, selMasks];
+
 		protos = protos.squeeze(0);
 		var maskPatterns = processMask(
 			protos,
@@ -203,17 +194,32 @@ class YoloV5 {
 		);
 		const alpha = 0.5;
 		const colorPaletteTens = tf.cast(colorPalette, 'float32');
-		const masksRes = masks(maskPatterns, colorPaletteTens, preprocImage, alpha);
+		var masksRes = masks(maskPatterns, colorPaletteTens, preprocImage, alpha);
+		masksRes = scaleImage(masksRes, imageFrame.height, imageFrame.width);
+
+		const scaledBoxes = scaleBoxes(
+			selBboxes,
+			imageFrame.height,
+			imageFrame.width
+		); //.round(); // rescale boxes to im0 size
+
+		canvas.width = imageFrame.width;
+		canvas.height = imageFrame.height;
+		const context = canvas.getContext('2d');
+		context.beginPath();
 		await tf.browser.toPixels(masksRes, canvas);
 
-		// tf.data.array(selclassIndices).forEachAsync((e) => console.log(e));
+		const gggg = scaledBoxes.arraySync();
 
-		const scaledBoxes = scale_boxes(
-			preprocImage.shape.slice(1, 3),
-			selBboxes,
-			imageFrame.width,
-			imageFrame.height
-		); //.round(); // rescale boxes to im0 size
+		gggg.forEach((bbox, idx) => {
+			context.rect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]);
+
+			context.stroke();
+		});
+
+		context.lineWidth = configRender.lineWidth;
+		context.strokeStyle = configRender.lineColor;
+		context.stroke();
 
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
