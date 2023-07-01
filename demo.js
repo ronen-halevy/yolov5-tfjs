@@ -1,5 +1,5 @@
 import { YoloV5, createModel } from './YoloV5.js';
-import Render from './Render.js';
+import { Render } from './Render.js';
 
 import configModel from './configs/configModel.json' assert { type: 'json' };
 import configNms from './configs/configNms.json' assert { type: 'json' };

@@ -1,5 +1,3 @@
-import configs from './configs/configRender.json' assert { type: 'json' };
-
 /**
  * Contains methods to render bounding boxes and text annotations on an image's (same as a single frame) detection.
  */
@@ -47,7 +45,6 @@ class Render {
 
 		context.fillStyle = this.textBackgoundColor;
 		const textHeight = parseInt(this.font, 10); // base 10
-
 		context.font = this.font;
 		const textWidth = context.measureText(annotationText).width;
 
@@ -65,6 +62,7 @@ class Render {
 
 		// render text
 		context.fillStyle = this.textColor;
+
 		context.fillText(annotationText, textX, textY);
 	};
 
@@ -76,7 +74,7 @@ class Render {
 	 * @param {Array<float>} classIndices - An array with a class index per a detectiono.
 	 */
 
-	renderOnImage = async (
+	renderOnImage = (
 		segmentedImage,
 		bboxes,
 		scores,
@@ -86,26 +84,36 @@ class Render {
 		imageHeight
 	) => {
 		const context = this.canvas.getContext('2d');
+
 		this.canvas.width = imageWidth;
 		this.canvas.height = imageHeight;
 
 		// context.drawImage(image, 0, 0, imageWidth, imageHeight);
-		await tf.browser.toPixels(
-			tf.image.resizeBilinear(segmentedImage, [imageHeight, imageWidth]),
-			canvas
-		);
+		tf.engine().startScope();
 
-		bboxes.forEach((box, idx) => {
-			this.renderBox(
-				context,
-				box,
-				scores[idx],
-				classNames[classIndices[idx]],
-				imageWidth,
-				imageHeight
+		let count1 = tf.memory().numTensors;
+		if ((imageHeight > 0) & (imageWidth > 0)) {
+			const resImage = tf.browser.toPixels(
+				tf.image.resizeBilinear(segmentedImage, [imageHeight, imageWidth]),
+				this.canvas
 			);
-		});
+			resImage.then(() => {
+				bboxes.forEach((box, idx) =>
+					this.renderBox(
+						context,
+						box,
+						scores[idx],
+						classNames[classIndices[idx]],
+						imageWidth,
+						imageHeight
+					)
+				);
+			});
+		}
+
+		tf.engine().endScope();
+		let count2 = tf.memory().numTensors;
+		console.log('numTensors ', count1);
 	};
 }
-
-export default Render;
+export { Render };
