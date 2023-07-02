@@ -16,6 +16,10 @@ https://github.com/ronen-halevy/yolov5-tfjs-gui
 The code is based on a trained graph model converted to js. Instructions for converting a model to js are listed in a paragraph below. This model performs image prediction, till nms state.
 The nms, mask arrangement and image composition is implemented using tensorflow.js
 
+## Program's Block Diagram
+
+TBD
+
 ## The Gui
 
 The GUI provides 3 functionalities:
@@ -36,6 +40,8 @@ Packages used by this implementation:
 - tensorflow.js
 - bootstrap
 - jquery
+
+## Model Converion to JS
 
 ## To run the app:
 
