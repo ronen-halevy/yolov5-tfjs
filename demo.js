@@ -12,6 +12,9 @@ var yoloV5 = '';
 const imageUrl =
 	'https://cdn.pixabay.com/photo/2023/01/01/16/35/street-7690347_960_720.jpg';
 
+const displayModeTable = ['Composed', 'Masks'];
+var displayModeIdx = 0;
+
 const onSelectModel = async (event) => {
 	$('#runYolo').attr('disabled', true);
 
@@ -38,6 +41,10 @@ const onSelectModel = async (event) => {
 	$('#runYolo').attr('disabled', false);
 };
 
+const onSelectDisplayMode = async (event) => {
+	displayModeIdx = (displayModeIdx + 1) % displayModeTable.length;
+};
+
 const onClickRunYolo = async (yoloV5, draw, imageUrl) => {
 	$('#runYoloSpinner').show();
 	var imageObject = new window.Image();
@@ -47,11 +54,13 @@ const onClickRunYolo = async (yoloV5, draw, imageUrl) => {
 	imageObject.src = imageObjectURL;
 
 	imageObject.addEventListener('load', async () => {
-		const [selBboxes, scores, classIndices, segmentedImage] =
+		const [selBboxes, scores, classIndices, composedImage, masks] =
 			await yoloV5.detectFrame(imageObject);
 
+		const image =
+			displayModeTable[displayModeIdx] == 'Composed' ? composedImage : masks;
 		draw.renderOnImage(
-			segmentedImage,
+			image,
 			selBboxes,
 			scores,
 			classIndices,
@@ -91,6 +100,8 @@ $(document).ready(function () {
 		textBackgoundColor
 	);
 	// init model selection radio buttons:
+	// select model
+
 	const models = Object.keys(modelsTable);
 	models.map((option, index) => {
 		$('#divRadioSelectModel')
@@ -108,6 +119,31 @@ $(document).ready(function () {
 			)
 			.append($('<br>'));
 	});
+	// select display mode
+	displayModeTable.map((option, index) => {
+		$('#divRadioSelectDisplayMode')
+			.append(
+				$('<input>')
+					.prop({
+						type: 'radio',
+						id: option,
+						name: 'Display Mode',
+						value: option,
+					})
+					.change((event) => onSelectDisplayMode(event))
+			)
+			.append(
+				$('<label>')
+					.prop({
+						for: option,
+					})
+					.text(option)
+			);
+		// .append($('<br>'));
+	});
+	// default radio button check:
+	$('input:radio[name="Display Mode"]')[displayModeIdx].checked = true;
+
 	// assign run button cbk
 	$('#runYolo').click(() => onClickRunYolo(yoloV5, draw, imageUrl));
 });

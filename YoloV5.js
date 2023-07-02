@@ -105,12 +105,12 @@ class ProcMasks {
 			invAlphMasksHead.dispose();
 			// preprocImage*invAlphMasksTail+: mcs (mask color summand)
 			// Mul preprocImage by invAlphMasksTail confirms value <0., otherwise the sum might exceed 1.0
-			const composedMaskedImage = preprocImage
+			const composedImage = preprocImage
 				.squeeze(0)
 				.mul(invAlphMasksTail.squeeze(0))
 				.add(mcs);
 
-			return composedMaskedImage;
+			return [composedImage, mcs];
 		});
 	};
 
@@ -133,7 +133,7 @@ class ProcMasks {
 			ind.dispose();
 			// ronen - tbd todo add to config param:
 			const alpha = 0.5;
-			const composedMaskedImage = this.composeImage(
+			const [composedImage, masks] = this.composeImage(
 				maskPatterns,
 				colorPalette,
 				preprocImage,
@@ -141,7 +141,7 @@ class ProcMasks {
 			);
 			colorPalette.dispose();
 
-			return composedMaskedImage;
+			return [composedImage, masks];
 		});
 	};
 }
@@ -246,7 +246,7 @@ class YoloV5 {
 			return null;
 		}
 
-		const composedMaskedImage = this.procMasks.run(
+		const [composedImage, masks] = this.procMasks.run(
 			preprocImage,
 			protos,
 			selMasksCoeffs,
@@ -257,7 +257,8 @@ class YoloV5 {
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
 		const classIndicesArray = selclassIndices.array();
-		const masksResArray = composedMaskedImage.array();
+		const composedImageArray = composedImage.array();
+		const masksArray = masks.array();
 
 		tf.engine().endScope();
 
@@ -266,7 +267,8 @@ class YoloV5 {
 			bboxesArray,
 			scoresArray,
 			classIndicesArray,
-			masksResArray,
+			composedImageArray,
+			masksArray,
 		]);
 
 		return reasultArrays;
