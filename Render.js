@@ -84,9 +84,13 @@ class Render {
 		imageHeight
 	) => {
 		const context = this.canvas.getContext('2d');
-
-		this.canvas.width = imageWidth;
-		this.canvas.height = imageHeight;
+		// set canvas size - only on a change, otherwise image flickers! ignore transient's 0s)
+		if ((imageWidth != this.canvas.width) & imageWidth) {
+			this.canvas.width = imageWidth;
+		}
+		if ((imageHeight != this.canvas.height) & imageHeight) {
+			this.canvas.height = imageHeight;
+		}
 
 		// context.drawImage(image, 0, 0, imageWidth, imageHeight);
 		tf.engine().startScope();

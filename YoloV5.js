@@ -239,20 +239,21 @@ class YoloV5 {
 			this.maxBoxes
 		);
 		scores.dispose();
-		if (selBboxes.shape[0] == 0) {
-			console.log('null');
-			tf.engine().endScope();
 
-			return null;
+		// bypass masks if no detections:
+		let [composedImage, masks] = [null, null];
+		if (selBboxes.shape[0] != 0) {
+			[composedImage, masks] = this.procMasks.run(
+				preprocImage,
+				protos,
+				selMasksCoeffs,
+				selBboxes,
+				selclassIndices
+			);
+		} else {
+			composedImage = preprocImage.squeeze(0);
+			masks = tf.zeros(composedImage.shape);
 		}
-
-		const [composedImage, masks] = this.procMasks.run(
-			preprocImage,
-			protos,
-			selMasksCoeffs,
-			selBboxes,
-			selclassIndices
-		);
 
 		const bboxesArray = selBboxes.array();
 		const scoresArray = selScores.array();
@@ -263,19 +264,17 @@ class YoloV5 {
 		tf.engine().endScope();
 
 		// conversion to array is asunc:
-		var reasultArrays = Promise.all([
+		return Promise.all([
 			bboxesArray,
 			scoresArray,
 			classIndicesArray,
 			composedImageArray,
 			masksArray,
 		]);
-
-		return reasultArrays;
 	};
 }
 
-const nms = (
+const nms = async (
 	bboxes,
 	scores,
 	classIndices,
@@ -284,40 +283,31 @@ const nms = (
 	scoreTHR,
 	maxBoxes
 ) => {
-	const nmsPromise = new Promise((resolve) => {
-		const nmsResults = tf.image.nonMaxSuppressionAsync(
-			bboxes,
-			scores,
-			maxBoxes,
-			iouTHR,
-			scoreTHR
-		);
-		resolve(nmsResults);
-	}).then((nmsResults) => {
-		var selectedBboxes = bboxes.gather(nmsResults);
-		var selectedClasses = classIndices.gather(nmsResults);
-		var selectedScores = scores.gather(nmsResults);
-		var selectedMasks = masks.gather(nmsResults);
-
-		var reasultArrays = Promise.all([
-			selectedBboxes,
-			selectedScores,
-			selectedClasses,
-			selectedMasks,
-		]);
-
-		return reasultArrays;
-	});
-
-	return nmsPromise;
+	const nmsResults = await tf.image.nonMaxSuppressionAsync(
+		bboxes,
+		scores,
+		maxBoxes,
+		iouTHR,
+		scoreTHR
+	);
+	return [
+		bboxes.gather(nmsResults),
+		scores.gather(nmsResults),
+		classIndices.gather(nmsResults),
+		masks.gather(nmsResults),
+	];
 };
 
-const createModel = (modelUrl, classNamesUrl) => {
-	const modelPromise = tf.loadGraphModel(modelUrl);
-	const classNamesPromise = fetch(classNamesUrl).then((x) => x.text());
-
-	const promise = Promise.all([modelPromise, classNamesPromise]);
-	return promise;
+const createModel = async (modelUrl, classNamesUrl, onProgress) => {
+	// in case of local url, eval to have the back ticked (`) address:
+	if (modelUrl.includes('window.location.href')) {
+		modelUrl = eval(modelUrl);
+	}
+	const model = await tf.loadGraphModel(modelUrl, {
+		onProgress: onProgress,
+	});
+	const classNames = await fetch(classNamesUrl).then((x) => x.text());
+	return [model, classNames];
 };
 
 export { YoloV5, createModel };
