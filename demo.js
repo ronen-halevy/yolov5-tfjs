@@ -15,14 +15,23 @@ const imageUrl =
 const displayModeTable = ['Composed', 'Masks'];
 var displayModeIdx = 0;
 
+const onProgress = (fractions) => {
+	$('#onProgress').text((fractions * 100).toFixed(2) + '%');
+};
+
 const onSelectModel = async (event) => {
 	$('#runYolo').attr('disabled', true);
 
 	$('#loadingModelSpinner').show();
+	$('#onProgress').show();
 
 	const { modelUrl, classNamesUrl } = modelsTable[event.target.value];
 
-	const [model, classNamesString] = await createModel(modelUrl, classNamesUrl);
+	const [model, classNamesString] = await createModel(
+		modelUrl,
+		classNamesUrl,
+		onProgress
+	);
 	classNames = classNamesString.split(/\r?\n/);
 	const nClasses = classNames.length;
 	const { scoreTHR, iouTHR, maxBoxes } = configNms;
@@ -38,6 +47,7 @@ const onSelectModel = async (event) => {
 	yoloV5 = new YoloV5(model, nClasses, scoreTHR, iouTHR, maxBoxes);
 
 	$('#loadingModelSpinner').hide();
+	$('#onProgress').hide();
 	$('#runYolo').attr('disabled', false);
 };
 
@@ -74,7 +84,7 @@ const onClickRunYolo = async (yoloV5, draw, imageUrl) => {
 
 $(document).ready(function () {
 	$('#title').html(
-		'<h3 class="text-center text-bg-primary mt-2">YoloV5TfJs</h3><br/>A minimal overhead demo of YoloV5<br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Press Run</h6>'
+		'<h3 class="text-center text-bg-primary mt-2">YoloV5TfJs</h3><br/><h4> YoloV5 Instance Segmentation Demo<h4/><br><h5>A serverless Tensorflow.JS based implementation of YoloV5 instance segmentation.<h5/><br/> <h6 class="mb-2">1. Select Model&Weights<br/>2. Select Display Mode<br/>3. Press Run</h6><br/> '
 	);
 
 	// disable button before any model loaded
@@ -82,7 +92,10 @@ $(document).ready(function () {
 	// disable spinners
 	$('#loadingModelSpinner').hide();
 	$('#runYoloSpinner').hide();
-	$('#showUrl').text('Credit: ' + imageUrl);
+	$('#showUrl').text('Image Credit: ' + imageUrl);
+	$('#credit').html(
+		'<a href="https://github.com/ultralytics/yolov5">Based on Ultralytics YoloV5 repository</a>'
+	);
 
 	// init renderer:
 	const font = configRender.font;
@@ -138,8 +151,8 @@ $(document).ready(function () {
 						for: option,
 					})
 					.text(option)
-			);
-		// .append($('<br>'));
+			)
+			.append($('<br>'));
 	});
 	// default radio button check:
 	$('input:radio[name="Display Mode"]')[displayModeIdx].checked = true;

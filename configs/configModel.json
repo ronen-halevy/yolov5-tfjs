@@ -1,6 +1,16 @@
 {
 	"models": {
+		"YoloV5nCoco": {
+			"modelUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov5-tfjs/main/models/tfjs_yolov5s_model/model.json",
+			"anchorsUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoTinyAnchors.json",
+			"classNamesUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoClassNames.txt"
+		},
 		"YoloV5sCoco": {
+			"modelUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov5-tfjs/main/models/tfjs_yolov5s_model/model.json",
+			"anchorsUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoTinyAnchors.json",
+			"classNamesUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoClassNames.txt"
+		},
+		"YoloV5mCoco": {
 			"modelUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov5-tfjs/main/models/tfjs_yolov5s_model/model.json",
 			"anchorsUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoTinyAnchors.json",
 			"classNamesUrl": "https://raw.githubusercontent.com/ronen-halevy/yolov3-tfjs-gui/master/data/cocoClassNames.txt"
